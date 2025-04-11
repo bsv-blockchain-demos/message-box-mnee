@@ -1,17 +1,25 @@
-import { useState } from 'react'
-import { Container, Stack, Box, Typography, Button } from '@mui/material'
+import { useCallback, useState } from 'react'
+import { Container, Stack, Button } from '@mui/material'
+import IdentitySelector from './IdentitySelector'
+import { Identity } from '@bsv/identity-react'
+import Header from './Header'
+import AmountSelector from './AmountSelector'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [selectedIdentity, setSelectedIdentity] = useState<Identity | null>(null)
+  const [amount, setAmount] = useState<number>(0)
+
+  const pay = useCallback(() => {
+    console.log('Pay', selectedIdentity?.identityKey, amount)
+  }, [selectedIdentity, amount])
 
   return (
       <Container>
-        <Stack>
-          <Box>
-            <Typography variant="h1">Do Something Useful</Typography>
-            <Typography variant="h2">{count}</Typography>
-            <Button onClick={() => setCount(count + 1)}>Count</Button>
-          </Box>
+        <Stack spacing={3} alignItems="center">
+          <Header />
+          <IdentitySelector selectedIdentity={selectedIdentity} setSelectedIdentity={setSelectedIdentity} />
+          <AmountSelector amount={amount} setAmount={setAmount} />
+          <Button onClick={pay}>Pay</Button>
         </Stack>
       </Container>
   )

@@ -8,23 +8,36 @@ const customSpacing = (factor: number): string => `${8 * factor}px`
 // Create custom theme using createTheme
 const Theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     primary: {
-      main: '#00d1b2'
+      main: '#00d1b2',
     },
     secondary: {
-      main: '#7e57c2'
+      main: '#7e57c2',
     },
     background: {
-      default: '#121212',
-      paper: '#242424'
+      default: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#121212' : '#f5f5f5',
+      paper: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#242424' : '#ffffff',
+    },
+    text: {
+      primary: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#ffffff' : '#333333',
+      secondary: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#b0b0b0' : '#666666',
     },
     error: {
-      main: '#ff3860'
-    }
+      main: '#ff3860',
+    },
+    success: {
+      main: '#48c774',
+    },
+    warning: {
+      main: '#ffdd57',
+    },
+    info: {
+      main: '#3273dc',
+    },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: 'Helvetica, Arial, Roboto, sans-serif',
     h4: {
       fontWeight: 700
     },

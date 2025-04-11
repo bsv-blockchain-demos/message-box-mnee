@@ -1,8 +1,25 @@
-import { Stack, Box, Typography } from '@mui/material'
+import { Stack, Box, Typography, useTheme } from '@mui/material'
 import { NumberField } from '@base-ui-components/react/number-field'
-import { toast } from 'react-toastify';
-import styles from './amountSelector.module.css';
-import { useRef, useState, useEffect } from 'react';
+import { toast } from 'react-toastify'
+import styles from './amountSelector.module.css'
+import { useRef, useState, useEffect } from 'react'
+
+// Styled dollar sign component
+const DollarSign = () => {
+    const theme = useTheme()
+    return <span style={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    padding: '0 8px', 
+    backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#f5f5f5', 
+    borderTopLeftRadius: '4px', 
+    borderBottomLeftRadius: '4px',
+    borderRight: '1px solid ' + (theme.palette.mode === 'dark' ? '#666' : '#ddd'),
+    color: theme.palette.mode === 'dark' ? 'white' : '#666'
+  }}>
+    $
+  </span>
+}
 
 interface AmountSelectorProps {
   readonly setAmount: (amount: number) => void;
@@ -30,6 +47,7 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
     useEffect(() => {
         if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
+            setAmount(0);
         }
         
         debounceTimeoutRef.current = setTimeout(() => {
@@ -44,7 +62,7 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
             }
             
             setAmount(value);
-        }, 500); // 500ms debounce time
+        }, 2000); // 500ms debounce time
 
         return () => {
             if (debounceTimeoutRef.current) {
@@ -80,6 +98,7 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
                     <NumberField.ScrubAreaCursor className={styles.ScrubAreaCursor} />
                 </NumberField.ScrubArea>
                 <NumberField.Group className={styles.Group}>
+                    <DollarSign />
                     <NumberField.Decrement className={styles.Decrement} />
                     <NumberField.Input
                         ref={inputRef}
@@ -88,8 +107,12 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
                         step="0.00001"
                         min="0.00001"
                         max="1000"
-                        placeholder="0.00000"
+                        placeholder={inputValue === '' ? "0.00000" : ""}
                         value={inputValue}
+                        style={{ 
+                            fontSize: '1.5rem',
+                            width: `${Math.max(80, inputValue.length * 20 + 40)}px`
+                        }}
                     />
                     <NumberField.Increment className={styles.Increment} />
                 </NumberField.Group>

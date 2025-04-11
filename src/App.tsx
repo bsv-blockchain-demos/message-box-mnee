@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import './App.css'
-import { Container, Stack, Box, Typography } from '@mui/material'
+import { Container, Stack, Box, Typography, Button } from '@mui/material'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -9,7 +8,9 @@ function App() {
       <Container>
         <Stack>
           <Box>
-            <Typography>Do Something Useful</Typography>
+            <Typography variant="h1">Do Something Useful</Typography>
+            <Typography variant="h2">{count}</Typography>
+            <Button onClick={() => setCount(count + 1)}>Count</Button>
           </Box>
         </Stack>
       </Container>

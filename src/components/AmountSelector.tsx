@@ -1,4 +1,4 @@
-import { Stack, Box, Typography, useTheme } from '@mui/material'
+import { Stack, Box, useTheme } from '@mui/material'
 import { NumberField } from '@base-ui-components/react/number-field'
 import { toast } from 'react-toastify'
 import styles from './amountSelector.module.css'
@@ -90,16 +90,12 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
     return (
       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={3}>
         <Box>
-          <Typography variant="h5">MNEE</Typography>
-        </Box>
-        <Box>
             <NumberField.Root className={styles.Field}>
                 <NumberField.ScrubArea className={styles.ScrubArea}>
                     <NumberField.ScrubAreaCursor className={styles.ScrubAreaCursor} />
                 </NumberField.ScrubArea>
                 <NumberField.Group className={styles.Group}>
                     <DollarSign />
-                    <NumberField.Decrement className={styles.Decrement} />
                     <NumberField.Input
                         ref={inputRef}
                         onChange={onChange}
@@ -111,10 +107,9 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
                         value={inputValue}
                         style={{ 
                             fontSize: '1.5rem',
-                            width: `${Math.max(80, inputValue.length * 20 + 40)}px`
+                            width: `120px`
                         }}
                     />
-                    <NumberField.Increment className={styles.Increment} />
                 </NumberField.Group>
             </NumberField.Root>
         </Box>

@@ -6,6 +6,7 @@ import { CssBaseline } from '@mui/material'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Theme from './theme'
+import { WalletProvider } from './context/WalletContext'
 
 const rootElement = document.getElementById('root')
 
@@ -17,19 +18,21 @@ const root = createRoot(rootElement)
 
 root.render(
   <StrictMode>
-    <ThemeProvider theme={Theme}>
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        pauseOnHover
-      />
-      <CssBaseline />
-      <App />
-    </ThemeProvider>
+    <WalletProvider>
+      <ThemeProvider theme={Theme}>
+        <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          pauseOnHover
+        />
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+    </WalletProvider>
   </StrictMode>
 )

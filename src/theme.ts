@@ -10,10 +10,10 @@ const Theme = createTheme({
   palette: {
     mode: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     primary: {
-      main: '#00d1b2',
+      main: '#1e81b0',
     },
     secondary: {
-      main: '#7e57c2',
+      main: '#e28743',
     },
     background: {
       default: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#121212' : '#f5f5f5',

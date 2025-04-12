@@ -5,11 +5,7 @@ import { GetPublicKeyArgs, Utils, Random, PublicKey, Transaction, OP, Script, Ha
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import { MNEEUtxo, Inscription } from 'mnee'
-
-type MNEETokenInstructions = {
-    protocolID: number[]
-    keyID: string
-}
+import { MNEETokenInstructions } from '../mnee/MNEE'
 
 const mneeApiToken = '92982ec1c0975f31979da515d46bae9f';
 const mneeApi = 'https://proxy-api.mnee.net';
@@ -129,7 +125,8 @@ function FundMetanet() {
             console.log('attempting to fund wallet')
             const instructions = {
                 protocolID: [2, 'Pay MNEE'],
-                keyID: 'test'
+                keyID: 'test',
+                counterparty: 'self'
             } as GetPublicKeyArgs
             setCustomInstructions(instructions as MNEETokenInstructions)
             const { publicKey } = await wallet.getPublicKey(instructions)

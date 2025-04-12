@@ -3,6 +3,7 @@ import { Button, Stack, TextField, Typography } from '@mui/material'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import AmountSelector from '../components/AmountSelector'
+import { TokenTransfer } from '../mnee/TokenTransfer'
 
 function P2Address() {
   const [address, setAddress] = useState('')
@@ -24,9 +25,19 @@ function P2Address() {
       return
     }
 
+    const script = 
+
     try {
       await wallet.isAuthenticated()
-      const tx = await wallet.pay({ to: address, amount })
+      const tx = await wallet.createAction({
+        description: 'Pay to Address',
+        outputs: [
+          {
+            lockingScript: new TokenTransfer().lock(address).toHex(),
+            amount
+          }
+        ]
+      })
       toast.success(`Payment sent! TXID: ${tx.txid}`)
       setAddress('')
       setAmount(0)

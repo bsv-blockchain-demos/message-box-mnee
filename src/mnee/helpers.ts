@@ -1,4 +1,4 @@
-import { Transaction, Utils } from "@bsv/sdk";
+import { Transaction, Utils, Beef } from "@bsv/sdk";
 import { TokenTransfer } from '../mnee/TokenTransfer'
 import { WalletInterface } from "@bsv/sdk";
 import { ListOutputsResult } from "@bsv/sdk";
@@ -46,13 +46,19 @@ export const createTx = async (
 
   // do we have enough to cover what we're sending and fee?
   for (const token of tokens.outputs) {
-    if (unitsIn >= units) break
+    if (unitsIn >= units + 1000) break 
     const [txid, vout] = token.outpoint.split('.')
-    const sourceTransaction = Transaction.fromBEEF(tokens.BEEF as number[])
+    const beef = Beef.fromBinary(tokens.BEEF as number[])
+    const sourceTransaction = beef.findAtomicTransaction(txid)
+    if (!sourceTransaction) {
+      console.error('Failed to find source transaction')
+      return { tx, error: 'Failed to find source transaction' }
+    }
     // for the output of the sourceTransaction, check the MNEE amt value
     const output = sourceTransaction.outputs[parseInt(vout)]
     const inscription = parseInscription(output.lockingScript)
     unitsIn += parseInt(inscription?.amt || '0')
+    console.log({ token, inscription })
     const customInstructions = JSON.parse(token?.customInstructions || '{}') as MNEETokenInstructions
     tx.addInput({
       sourceTXID: txid,
@@ -61,12 +67,14 @@ export const createTx = async (
       unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions, 'all', true), // ANYONECANPAY
     })
   }
+  const fee = (unitsIn >= 1000001) ? 1000 : 100
 
-  if (unitsIn < units) {
+  console.log({ unitsIn, units })
+  if (unitsIn < units + fee) {
     return { tx, error: 'Insufficient MNEE tokens to spend' }
   }
 
-  const remainder = unitsIn - units
+  const remainder = unitsIn - units - fee
 
   // pay the person you're trying to pay
   tx.addOutput({
@@ -80,8 +88,6 @@ export const createTx = async (
     lockingScript: new TokenTransfer().lock(changeAddress, remainder)
   })
 
-  const fee = (unitsIn >= 1000001) ? 1000 : 100
-
   // this output is to pay the issuer
   tx.addOutput({
     lockingScript: new TokenTransfer().lock(prodAddress, fee),
@@ -90,6 +96,8 @@ export const createTx = async (
 
   // get signatures from Metanet Desktop
   await tx.sign()
+
+  console.log({ tx: tx.toHex()})
 
   return { tx, error: false }
 }

@@ -12,7 +12,8 @@ export default function Balance() {
       await wallet.isAuthenticated()
       const ts = await wallet.listOutputs({
           basket: 'MNEE tokens',
-          include: 'entire transactions'
+          include: 'entire transactions',
+          includeCustomInstructions: true
       })
       setTokens(ts)
       let total = 0

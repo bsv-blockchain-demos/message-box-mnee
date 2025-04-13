@@ -1,11 +1,11 @@
 import { Button, Stack, Typography } from '@mui/material'
 import { QRCodeCanvas } from 'qrcode.react'
 import { useCallback, useEffect, useState } from 'react'
-import { GetPublicKeyArgs, Utils, Random, PublicKey, Transaction, OP, Script, Hash } from '@bsv/sdk'
+import { GetPublicKeyArgs, Utils, PublicKey, Transaction, OP, Script, Hash } from '@bsv/sdk'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import { MNEEUtxo, Inscription } from 'mnee'
-import { MNEETokenInstructions } from '../mnee/MNEE'
+import { MNEETokenInstructions } from '../mnee/TokenTransfer'
 
 const mneeApiToken = '92982ec1c0975f31979da515d46bae9f';
 const mneeApi = 'https://proxy-api.mnee.net';
@@ -76,7 +76,7 @@ export const parseInscription = (script: Script) => {
   };
 
 function FundMetanet() {
-    const { wallet, tokens } = useWallet()
+    const { wallet } = useWallet()
     const [customInstructions, setCustomInstructions] = useState<MNEETokenInstructions | null>(null)
     const [address, setAddress] = useState<string>('')
 

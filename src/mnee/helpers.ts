@@ -58,7 +58,7 @@ export const createTx = async (
       sourceTXID: txid,
       sourceOutputIndex: parseInt(vout),
       sourceTransaction,
-      unlockingScriptTemplate: new TokenTransfer().userUnlock(wallet, customInstructions, 'all', true), // ANYONECANPAY
+      unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions, 'all', true), // ANYONECANPAY
     })
   }
 

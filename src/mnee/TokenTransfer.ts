@@ -94,7 +94,7 @@ export type MNEETokenInstructions = {
      * @param {Script} lockingScript - Optional. The lockinScript. Otherwise the input.sourceTransaction is required.
      * @returns {Object} - An object containing the `sign` and `estimateLength` functions.
      */
-    userUnlock(
+    unlock(
       wallet: WalletInterface,
       customInstructions: MNEETokenInstructions,
       signOutputs: "all" | "none" | "single" = "all",

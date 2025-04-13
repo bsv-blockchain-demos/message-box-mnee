@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import AmountSelector from '../components/AmountSelector'
 import { cosignBroadcast, createTx, fetchBeef } from '../mnee/helpers'
 import { MNEETokenInstructions } from '../mnee/TokenTransfer'
-import { GetPublicKeyArgs, PublicKey, Transaction } from '@bsv/sdk'
+import { GetPublicKeyArgs, PublicKey } from '@bsv/sdk'
 
 function P2Address() {
   const [address, setAddress] = useState('')
@@ -18,7 +18,7 @@ function P2Address() {
 
   const getChangeAddress = async () : Promise<{ instructions: MNEETokenInstructions, change: string }> => {
     try {
-        console.log('attempting to fund wallet')
+        console.log('creating change address')
         const instructions = {
             protocolID: [2, 'Pay MNEE'],
             keyID: 'change',

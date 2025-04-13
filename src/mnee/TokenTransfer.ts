@@ -169,9 +169,10 @@ export type MNEETokenInstructions = {
 
           // include the pattern from BRC-29
           const { signature } = await wallet.createSignature({
-            hashToDirectlySign: Hash.sha256(preimage),
+            hashToDirectlySign: Hash.sha256(Hash.sha256(preimage)),
             protocolID: customInstructions.protocolID,
-            keyID: customInstructions.keyID
+            keyID: customInstructions.keyID,
+            counterparty: customInstructions?.counterparty || 'self'
           })
 
           console.log({ signature })
@@ -179,8 +180,10 @@ export type MNEETokenInstructions = {
           const { publicKey } = await wallet.getPublicKey({
             protocolID: customInstructions.protocolID,
             keyID: customInstructions.keyID,
-            counterparty: customInstructions.counterparty
+            counterparty: customInstructions?.counterparty || 'self'
           })
+
+          console.log({ hash: PublicKey.fromString(publicKey).toHash('hex') })
 
           const rawSignature = Signature.fromDER(signature, 'hex')
           const sig = new TransactionSignature(

@@ -1,7 +1,7 @@
-import { Transaction, Utils, Beef } from "@bsv/sdk";
+import { Transaction, Utils, Beef, WhatsOnChain, Script, Spend, UnlockingScript } from "@bsv/sdk";
 import { TokenTransfer } from '../mnee/TokenTransfer'
 import { WalletInterface } from "@bsv/sdk";
-import { ListOutputsResult } from "@bsv/sdk";
+import { ListOutputsResult, SatoshisPerKilobyte } from "@bsv/sdk";
 import { parseInscription } from "../pages/FundMetanet";
 import { MNEETokenInstructions } from "../mnee/TokenTransfer";
 
@@ -11,6 +11,7 @@ export const prodTokenId = 'ae59f3b898ec61acbdb6cc7a245fabeded0c094bf046f35206a3
 export const mneeApi = 'https://proxy-api.mnee.net'
 export const mneeApiToken = '92982ec1c0975f31979da515d46bae9f'
 export const gorillaPoolApi = 'https://ordinals.1sat.app'
+export const feeAddress = '19Vq2TV8aVhFNLQkhDMdnEQ7zT96x6F3PK'
 export const fees = [
   {
     "min": 0,
@@ -90,19 +91,46 @@ export const createTx = async (
 
   // this output is to pay the issuer
   tx.addOutput({
-    lockingScript: new TokenTransfer().lock(prodAddress, fee),
+    lockingScript: new TokenTransfer().lock(feeAddress, fee),
     satoshis: 1
   })
 
   // get signatures from Metanet Desktop
   await tx.sign()
 
-  console.log({ tx: tx.toHex()})
+  tx.inputs.map((input, idx) => {
+    try {
+      const spend = new Spend({
+        sourceTXID: input.sourceTXID || input.sourceTransaction?.id('hex') || '',
+        sourceOutputIndex: input.sourceOutputIndex,
+        lockingScript: input.sourceTransaction?.outputs[input.sourceOutputIndex]?.lockingScript || new Script(),
+        sourceSatoshis: input.sourceTransaction?.outputs[input.sourceOutputIndex]?.satoshis || 0,
+        transactionVersion: tx.version,
+        otherInputs: tx.inputs.filter((i) => i !== input),
+        unlockingScript: input.unlockingScript || new UnlockingScript(),
+        inputSequence: input.sequence ?? 0xffffff,
+        inputIndex: idx,
+        outputs: tx.outputs,
+        lockTime: tx.lockTime
+      })
+      const spendValid = spend.validate()
+      if (!spendValid) {
+        return { tx, error: 'Failed to validate transaction input ' + idx }
+      }
+      console.log({ spendValid: idx })
+    } catch (error) {
+      console.error(error)
+      return { tx, error: 'Failed to validate transaction input ' + idx }
+    }
+  })
+  
+
 
   return { tx, error: false }
 }
 
 export const cosignBroadcast = async (tx: Transaction) => {
+  console.log({ tx: tx.toHex() })
   const base64Tx = Utils.toBase64(tx.toBinary())
   const response = await fetch(`${mneeApi}/v1/transfer?auth_token=${mneeApiToken}`, {
     method: 'POST',

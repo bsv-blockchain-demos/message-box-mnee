@@ -70,8 +70,9 @@ export const parseInscription = (script: Script) => {
           break;
       }
     }
-  
-    return insc;
+
+    const inscriptionData = Utils.toUTF8(insc?.file?.content || [])
+    return JSON.parse(inscriptionData)
   };
 
 function FundMetanet() {
@@ -106,15 +107,10 @@ function FundMetanet() {
         let units = 0
         tx.outputs.map((output, vout) => {
             if (vout !== recent.vout) return
-            const insc = parseInscription(output.lockingScript)
-            const content = insc?.file?.content
-            if (!content) return
-            const inscriptionData = Utils.toUTF8(content)
-            if (!inscriptionData) return
-            const inscriptionJson = JSON.parse(inscriptionData)
-            if (prodTokenId !== inscriptionJson.id) return
-            if (inscriptionJson.op !== 'transfer') return
-            units += parseInt(inscriptionJson.amt)
+            const inscription = parseInscription(output.lockingScript)
+            if (prodTokenId !== inscription.id) return
+            if (inscription.op !== 'transfer') return
+            units += parseInt(inscription.amt)
         })
         return { units, atomicBEEF }
     }

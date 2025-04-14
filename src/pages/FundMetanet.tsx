@@ -172,8 +172,9 @@ function FundMetanet() {
             : <>
                 <Typography variant="subtitle1">Send MNEE to your Metanet Wallet</Typography>
                 <QRCodeCanvas value={address} size={160} />
+                <Typography variant="body1">{address}</Typography>
                 <Typography variant="overline">Only Send MNEE</Typography>
-                <Button onClick={listenForFundsAndInteralize}>Check For Incoming Funds</Button>
+                <Button variant='contained' onClick={listenForFundsAndInteralize}>Check For Incoming Funds</Button>
             </>}
         </Stack>
     )

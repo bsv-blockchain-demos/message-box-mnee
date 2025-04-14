@@ -9,7 +9,7 @@ export default function Tokens
 
     useEffect(() => {
         getBalance()
-    }, [getBalance])
+    }, [])
 
     return (
       <Stack width="100%" maxWidth={640} sx={{ pb: 5 }}>

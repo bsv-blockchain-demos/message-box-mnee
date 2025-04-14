@@ -96,7 +96,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         getBalance()
-    }, [wallet, mnee])
+    }, [])
 
     const walletContextValue = useMemo(() => ({
         wallet,
@@ -108,7 +108,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         displayTokens,
         setDisplayTokens,
         getBalance
-    }), [wallet, mnee, mneePeerPayClient, balance, tokens, displayTokens])
+    }), [balance, tokens, displayTokens])
 
     return (
         <WalletContext.Provider value={walletContextValue}>

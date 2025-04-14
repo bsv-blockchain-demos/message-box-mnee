@@ -1,11 +1,11 @@
 import { Stack, Typography, IconButton, Tooltip } from "@mui/material"
 import { Link } from "@mui/icons-material"
-import { useWallet, formatToUSD } from "../context/WalletContext"
+import { useWallet } from "../context/WalletContext"
 import { useEffect } from "react"
 
 export default function Tokens
 () {
-    const { balance, getBalance, displayTokens } = useWallet()
+    const { getBalance, displayTokens } = useWallet()
 
     useEffect(() => {
         getBalance()

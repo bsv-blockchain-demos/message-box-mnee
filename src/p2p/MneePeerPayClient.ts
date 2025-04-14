@@ -1,8 +1,13 @@
 import { MessageBoxClient, PeerMessage } from '@bsv/p2p'
-import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, WalletProtocol, Beef, ListOutputsResult, Transaction, Random, AuthFetch } from '@bsv/sdk'
+import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOutputsResult, Transaction, Random, AuthFetch } from '@bsv/sdk'
 import { Logger } from './Logger.js'
 import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'
+
+const mneeApiToken = import.meta.env.MNEE_API_TOKEN
+const mneeApi = import.meta.env.MNEE_API
+const feeAddress = import.meta.env.FEE_ADDRESS as string
+const gorillaPoolApi = import.meta.env.GORILLA_POOL_API
 
 export const MNEE_PAYMENT_MESSAGEBOX = 'mnee_payment_inbox'
 
@@ -33,26 +38,6 @@ export interface IncomingPayment {
   messageId: string
   token: PaymentToken
 }
-
-export const prodApprover = '020a177d6a5e6f3a8689acd2e313bd1cf0dcf5a243d1cc67b7218602aee9e04b2f'
-export const prodAddress = '1inHbiwj2jrEcZPiSYnfgJ8FmS1Bmk4Dh'
-export const prodTokenId = 'ae59f3b898ec61acbdb6cc7a245fabeded0c094bf046f35206a3aec60ef88127_0'
-export const mneeApi = 'https://proxy-api.mnee.net'
-export const mneeApiToken = '92982ec1c0975f31979da515d46bae9f'
-export const gorillaPoolApi = 'https://ordinals.1sat.app'
-export const feeAddress = '19Vq2TV8aVhFNLQkhDMdnEQ7zT96x6F3PK'
-export const fees = [
-  {
-    "min": 0,
-    "max": 1000000,
-    "fee": 100
-  },
-  {
-    "min": 1000001,
-    "max": 9007199254740991,
-    "fee": 1000
-  }
-]
 
 /**
  * PeerPayClient enables peer-to-peer Bitcoin payments using MessageBox.

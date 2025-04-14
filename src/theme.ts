@@ -104,7 +104,7 @@ const Theme = createTheme({
         '.MuiInputBase-root .MuiInputAdornment-root svg': {
           color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
-        'body .MuiInputAdornment-root svg[data-testid="SearchIcon"], body .MuiInputAdornment-root svg:first-child': {
+        'body .MuiInputAdornment-root svg[data-testid="SearchIcon"], body .MuiInputAdornment-root svg:first-of-type': {
           color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         'svg[data-mui-test="SearchIcon"]': {

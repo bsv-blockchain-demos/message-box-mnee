@@ -1,8 +1,14 @@
-import React, { useEffect, useState, useContext, useMemo } from "react"
+import React, { useState, useContext, useMemo, useEffect } from "react"
 import { WalletClient, ListOutputsResult, Beef, WalletOutput } from "@bsv/sdk"
 import Mnee from "mnee"
-import { prodTokenId } from "../mnee/helpers"
 import { parseInscription } from "../pages/FundMetanet"
+
+
+const mneeApiToken = import.meta.env.MNEE_API_TOKEN
+const tokenId = import.meta.env.TOKEN_ID
+
+const wallet = new WalletClient('auto', 'P2P MNEE')
+const mnee = new Mnee(mneeApiToken)
 
 export type WalletContextValue = {
     wallet: WalletClient
@@ -16,8 +22,8 @@ export type WalletContextValue = {
 }
 
 const WalletContext = React.createContext<WalletContextValue>({
-    wallet: new WalletClient(),
-    mnee: new Mnee(),
+    wallet: {} as WalletClient,
+    mnee: {} as Mnee,
     balance: 0,
     getBalance: () => {},
     tokens: {} as ListOutputsResult,
@@ -40,8 +46,6 @@ export const formatToUSD = (amt: number | undefined) => {
 }
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
-    const wallet = new WalletClient()
-    const mnee = new Mnee()
     const [balance, setBalance] = useState<number>(0)
     const [tokens, setTokens] = useState<ListOutputsResult>({} as ListOutputsResult)
     const [displayTokens, setDisplayTokens] = useState<any[]>([])
@@ -70,7 +74,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
             if (!output) return
             const script = output.lockingScript
             const inscription = parseInscription(script)
-            if (prodTokenId !== inscription.id) return
+            if (tokenId !== inscription.id) return
             if (inscription.op !== 'transfer') return
             const amt = parseInt(inscription.amt)
             displayToken.amt = formatToUSD(amt)
@@ -85,7 +89,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         getBalance()
-    }, [])
+    }, [wallet, mnee])
 
     const walletContextValue = useMemo(() => ({
         wallet,

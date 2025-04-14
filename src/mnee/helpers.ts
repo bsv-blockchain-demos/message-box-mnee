@@ -2,13 +2,18 @@ import { Transaction, Utils, Beef, WalletInterface, ListOutputsResult } from "@b
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
 
-export const prodApprover = '020a177d6a5e6f3a8689acd2e313bd1cf0dcf5a243d1cc67b7218602aee9e04b2f'
-export const prodAddress = '1inHbiwj2jrEcZPiSYnfgJ8FmS1Bmk4Dh'
-export const prodTokenId = 'ae59f3b898ec61acbdb6cc7a245fabeded0c094bf046f35206a3aec60ef88127_0'
-export const mneeApi = 'https://proxy-api.mnee.net'
-export const mneeApiToken = '92982ec1c0975f31979da515d46bae9f'
-export const gorillaPoolApi = 'https://ordinals.1sat.app'
-export const feeAddress = '19Vq2TV8aVhFNLQkhDMdnEQ7zT96x6F3PK'
+const mneeApiToken = import.meta.env.MNEE_API_TOKEN
+const mneeApi = import.meta.env.MNEE_API
+const feeAddress = import.meta.env.FEE_ADDRESS as string
+const gorillaPoolApi = import.meta.env.GORILLA_POOL_API
+
+// export const prodApprover = '020a177d6a5e6f3a8689acd2e313bd1cf0dcf5a243d1cc67b7218602aee9e04b2f'
+// export const prodAddress = '1inHbiwj2jrEcZPiSYnfgJ8FmS1Bmk4Dh'
+// export const prodTokenId = 'ae59f3b898ec61acbdb6cc7a245fabeded0c094bf046f35206a3aec60ef88127_0'
+// export const mneeApi = 'https://proxy-api.mnee.net'
+// export const mneeApiToken = '92982ec1c0975f31979da515d46bae9f'
+// export const gorillaPoolApi = 'https://ordinals.1sat.app'
+// export const feeAddress = '19Vq2TV8aVhFNLQkhDMdnEQ7zT96x6F3PK'
 
 export const fetchBeef = async (txid: string): Promise<number[]> => {
   const beef = await (await fetch(`${gorillaPoolApi}/v5/tx/${txid}/beef`)).arrayBuffer()
@@ -45,7 +50,7 @@ export const createTx = async (
     const inscription = parseInscription(output.lockingScript)
     unitsIn += parseInt(inscription?.amt || '0')
     console.log({ token, inscription })
-    const customInstructions = JSON.parse(token?.customInstructions || '{}') as MNEETokenInstructions
+    const customInstructions = JSON.parse(token?.customInstructions ?? '{}') as MNEETokenInstructions
     tx.addInput({
       sourceTXID: txid,
       sourceOutputIndex: parseInt(vout),

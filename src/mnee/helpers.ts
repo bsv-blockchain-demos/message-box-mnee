@@ -98,34 +98,6 @@ export const createTx = async (
   // get signatures from Metanet Desktop
   await tx.sign()
 
-  tx.inputs.map((input, idx) => {
-    try {
-      const spend = new Spend({
-        sourceTXID: input.sourceTXID || input.sourceTransaction?.id('hex') || '',
-        sourceOutputIndex: input.sourceOutputIndex,
-        lockingScript: input.sourceTransaction?.outputs[input.sourceOutputIndex]?.lockingScript || new Script(),
-        sourceSatoshis: input.sourceTransaction?.outputs[input.sourceOutputIndex]?.satoshis || 0,
-        transactionVersion: tx.version,
-        otherInputs: tx.inputs.filter((i) => i !== input),
-        unlockingScript: input.unlockingScript || new UnlockingScript(),
-        inputSequence: input.sequence ?? 0xffffff,
-        inputIndex: idx,
-        outputs: tx.outputs,
-        lockTime: tx.lockTime
-      })
-      const spendValid = spend.validate()
-      if (!spendValid) {
-        return { tx, error: 'Failed to validate transaction input ' + idx }
-      }
-      console.log({ spendValid: idx })
-    } catch (error) {
-      console.error(error)
-      return { tx, error: 'Failed to validate transaction input ' + idx }
-    }
-  })
-  
-
-
   return { tx, error: false }
 }
 

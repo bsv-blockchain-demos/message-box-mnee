@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import AmountSelector from '../components/AmountSelector'
 import { cosignBroadcast, createTx, fetchBeef } from '../mnee/helpers'
 import { MNEETokenInstructions } from '../mnee/TokenTransfer'
-import { GetPublicKeyArgs, PublicKey } from '@bsv/sdk'
+import { GetPublicKeyArgs, OutpointString, PublicKey } from '@bsv/sdk'
 
 function P2Address() {
   const [address, setAddress] = useState('')
@@ -63,19 +63,30 @@ function P2Address() {
         toast.success(`Payment sent! TXID: ${response.tx.id('hex')}`)
         // for each input, we'd need to grab the sourceTransaction
         const atomicBEEF = await fetchBeef(response.tx.id('hex'))
+        const spent = createTxRes.tx.inputs.map(input => (input.sourceTXID + '.' + input.sourceOutputIndex) as OutpointString)
+        await Promise.all(spent.map(async output => {
+          const { relinquished } = await wallet.relinquishOutput({
+            basket: 'MNEE tokens',
+            output
+          })
+          if (!relinquished) {
+            toast.error('Failed to relinquish output')
+            return
+          }
+        }))
         const { accepted } = await wallet.internalizeAction({
           tx: atomicBEEF,
           description: 'Receive MNEE tokens',
           labels: ['MNEE'],
           outputs: [{
-              outputIndex: 1,
-              protocol: 'basket insertion',
-              insertionRemittance: {
-                  basket: 'MNEE tokens',
-                  customInstructions: JSON.stringify(instructions),
-                  tags: ['MNEE']
-              }
-          }]
+            outputIndex: 1,
+            protocol: 'basket insertion',
+            insertionRemittance: {
+                basket: 'MNEE tokens',
+                customInstructions: JSON.stringify(instructions),
+                tags: ['MNEE']
+            }
+        }]
         })
         if (!accepted) {
           toast.error('Metanet Desktop rejected the change output')

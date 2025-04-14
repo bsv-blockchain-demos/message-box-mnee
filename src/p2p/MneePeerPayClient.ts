@@ -5,7 +5,6 @@ import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'
 
 export const MNEE_PAYMENT_MESSAGEBOX = 'mnee_payment_inbox'
-const STANDARD_PAYMENT_OUTPUT_INDEX = 0
 
 /**
  * Configuration options for initializing PeerPayClient.
@@ -58,7 +57,7 @@ export const fees = [
 /**
  * PeerPayClient enables peer-to-peer Bitcoin payments using MessageBox.
  */
-export class PeerPayClient extends MessageBoxClient {
+export class MneePeerPayClient extends MessageBoxClient {
   private readonly peerPayWalletClient: WalletClient
   private _authFetchInstance?: AuthFetch
 
@@ -199,7 +198,7 @@ export class PeerPayClient extends MessageBoxClient {
 
     const { publicKey: originator } = await this.peerPayWalletClient.getPublicKey({ identityKey: true })
 
-    const transaction = await PeerPayClient.fetchBeef(tx.id('hex'))
+    const transaction = await MneePeerPayClient.fetchBeef(tx.id('hex'))
 
     const payment = {
       keyID,

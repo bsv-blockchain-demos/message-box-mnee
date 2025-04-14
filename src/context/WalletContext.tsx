@@ -8,7 +8,7 @@ import { MneePeerPayClient } from "../p2p/MneePeerPayClient"
 const mneeApiToken = import.meta.env.MNEE_API_TOKEN
 const tokenId = import.meta.env.TOKEN_ID
 
-const wallet = new WalletClient('auto', 'P2P MNEE')
+const wallet = new WalletClient('json-api')
 const mnee = new Mnee(mneeApiToken)
 const mneePeerPayClient = new MneePeerPayClient({
     walletClient: wallet,
@@ -28,15 +28,15 @@ export type WalletContextValue = {
 }
 
 const WalletContext = React.createContext<WalletContextValue>({
-    wallet: {} as WalletClient,
-    mnee: {} as Mnee,
+    wallet,
+    mnee,
+    mneePeerPayClient,
     balance: 0,
     getBalance: () => {},
     tokens: {} as ListOutputsResult,
     setTokens: () => {},
     setDisplayTokens: () => {},
-    displayTokens: [],
-    mneePeerPayClient: {} as MneePeerPayClient
+    displayTokens: []
 })
 
 export function useWallet() {
@@ -101,14 +101,14 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     const walletContextValue = useMemo(() => ({
         wallet,
         mnee,
+        mneePeerPayClient,
         balance,
         tokens,
         setTokens,
         displayTokens,
         setDisplayTokens,
-        getBalance,
-        mneePeerPayClient
-    }), [wallet, balance, tokens, displayTokens, mneePeerPayClient])
+        getBalance
+    }), [wallet, mnee, mneePeerPayClient, balance, tokens, displayTokens])
 
     return (
         <WalletContext.Provider value={walletContextValue}>

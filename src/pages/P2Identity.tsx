@@ -8,7 +8,7 @@ import { Identity } from '@bsv/identity-react'
 
 export default function P2Identity () {
     const [amount, setAmount] = useState<number>(0)
-    const { wallet, tokens, balance, mnee } = useWallet()
+    const { wallet, tokens, balance, mneePeerPayClient } = useWallet()
     const [selectedIdentity, setSelectedIdentity] = useState<Identity | null>(null)
   
     const pay = useCallback(async () => {

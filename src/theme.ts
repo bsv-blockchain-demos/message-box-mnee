@@ -10,10 +10,10 @@ const Theme = createTheme({
   palette: {
     mode: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     primary: {
-      main: '#1e81b0',
+      main: '#2F6134',
     },
     secondary: {
-      main: '#e28743',
+      main: '#ffeda5',
     },
     background: {
       default: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#121212' : '#f5f5f5',
@@ -46,7 +46,78 @@ const Theme = createTheme({
     }
   },
   // Override default MUI spacing with custom spacing function
-  spacing: customSpacing
+  spacing: customSpacing,
+  components: {
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            '&.Mui-focused fieldset': {
+              borderColor: '#2F6134',
+            },
+          },
+        },
+      },
+    },
+    MuiFilledInput: {
+      styleOverrides: {
+        root: {
+          '&:hover:not(.Mui-disabled)': {
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+          },
+          '&.Mui-focused': {
+            backgroundColor: 'rgba(0, 0, 0, 0.06)',
+          },
+        },
+      },
+    },
+    MuiCssBaseline: {
+      styleOverrides: {
+        '.MuiFilledInput-underline:after': {
+          borderBottomColor: '#2F6134 !important',
+        },
+        '.MuiFilledInput-underline.Mui-focused:after': {
+          borderBottomColor: '#2F6134 !important',
+        },
+        // Directly target the specific CSS class identified
+        '.css-1312ppl-MuiSvgIcon-root': {
+          color: '#2F6134 !important',
+        },
+        // As a fallback also keep general targeting
+        '.MuiInputAdornment-root .MuiSvgIcon-root[data-testid="SearchIcon"]': {
+          color: '#2F6134 !important',
+        },
+        '.MuiInputBase-root .MuiInputAdornment-root svg': {
+          color: '#2F6134 !important',
+        },
+        'body .MuiInputAdornment-root svg[data-testid="SearchIcon"], body .MuiInputAdornment-root svg:first-child': {
+          color: '#2F6134 !important',
+        },
+        'svg[data-mui-test="SearchIcon"]': {
+          color: '#2F6134 !important',
+        },
+        'svg[aria-label="search"]': {
+          color: '#2F6134 !important',
+        },
+        '.search-icon, .searchIcon, .SearchIcon, [class*="SearchIcon"]': {
+          color: '#2F6134 !important',
+        },
+      },
+    },
+    MuiInput: {
+      styleOverrides: {
+        underline: {
+          '&:after': {
+            borderBottomColor: '#2F6134',
+          },
+          '&.Mui-focused:after': {
+            borderBottomColor: '#2F6134',
+          },
+        },
+      },
+    },
+  },
+
 })
 
 export default Theme // Export custom theme

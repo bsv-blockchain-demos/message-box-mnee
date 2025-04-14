@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import IdentitySelector from '../components/IdentitySelector'
-import { Button } from '@mui/material'
+import { Button, Typography } from '@mui/material'
 import { Identity } from '@bsv/identity-react'
 
 export default function P2Identity () {
@@ -26,8 +26,9 @@ export default function P2Identity () {
     }, [selectedIdentity, amount, wallet])
     
     return (<>
+      <Typography textAlign='center' variant="caption" color="text.secondary">Send MNEE to a certified identity.</Typography>
       <IdentitySelector selectedIdentity={selectedIdentity} setSelectedIdentity={setSelectedIdentity} />
       <AmountSelector setAmount={setAmount} />
-      <Button onClick={pay} variant="contained" color="primary" disabled={amount === 0 || !selectedIdentity}>Pay</Button>
+      <Button onClick={pay} variant="contained" color="primary" disabled={amount === 0 || !selectedIdentity}>Send</Button>
     </>)
 }

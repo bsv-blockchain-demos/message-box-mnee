@@ -104,15 +104,15 @@ function P2Address() {
   }
 
   return (
-    <Stack spacing={2} width="100%" maxWidth="320px">
-      <Typography variant="h5">Pay to Address</Typography>
+    <Stack spacing={2} width="100%" maxWidth="320px" alignItems="center" justifyContent="center">
+      <Typography textAlign='center' variant="caption" color="text.secondary">Send MNEE to an external wallet.</Typography>
       <TextField
         fullWidth
-        label="Bitcoin Address"
+        label="Address"
         variant="filled"
         value={address}
         onChange={handleAddressChange}
-        placeholder="Enter Bitcoin address"
+        placeholder="1..."
       />
       <AmountSelector setAmount={setAmount} />
       <Button 
@@ -121,7 +121,7 @@ function P2Address() {
         color="primary" 
         disabled={amount <= 0 || !address}
       >
-        Pay
+        Send
       </Button>
     </Stack>
   )

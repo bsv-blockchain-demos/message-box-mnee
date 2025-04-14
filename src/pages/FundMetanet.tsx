@@ -10,14 +10,6 @@ import { MNEETokenInstructions } from '../mnee/TokenTransfer'
 const mneeApiToken = '92982ec1c0975f31979da515d46bae9f';
 const mneeApi = 'https://proxy-api.mnee.net';
 const prodTokenId = 'ae59f3b898ec61acbdb6cc7a245fabeded0c094bf046f35206a3aec60ef88127_0';
-const prodApprover = '020a177d6a5e6f3a8689acd2e313bd1cf0dcf5a243d1cc67b7218602aee9e04b2f';
-const prodAddress = '1inHbiwj2jrEcZPiSYnfgJ8FmS1Bmk4Dh';
-const devTokenId = '833a7720966a2a435db28d967385e8aa7284b6150ebb39482cc5228b73e1703f_0';
-const devAddress = '1A1QNEkLuvAALsmG4Me3iubP8zb5C6jpv5';
-const qaTokenId = '55cde0733049a226fdb6abc387ee9dcd036e859f7cbc69ab90050c0435139f00_0';
-const qaAddress = '1BW7cejD27vDLiHsbK1Hvf1y4JTKvC1Yue';
-const stageTokenId = '833a7720966a2a435db28d967385e8aa7284b6150ebb39482cc5228b73e1703f_0';
-const stageAddress = '1AZNdbFYBDFTAEgzZMfPzANxyNrpGJZAUY';
 const gorillaPoolApi = 'https://ordinals.1sat.app';
 
 export const parseInscription = (script: Script) => {
@@ -105,7 +97,7 @@ function FundMetanet() {
         const valid = await tx.verify()
         if (!valid) toast.error('Invalid transaction was retrieved, did not pass SPV')
         let units = 0
-        tx.outputs.map((output, vout) => {
+        tx.outputs.forEach((output, vout) => {
             if (vout !== recent.vout) return
             const inscription = parseInscription(output.lockingScript)
             if (prodTokenId !== inscription.id) return
@@ -121,7 +113,7 @@ function FundMetanet() {
             console.log('attempting to fund wallet')
             const instructions = {
                 protocolID: [2, 'Pay MNEE'],
-                keyID: 'test',
+                keyID: Utils.toBase64(Utils.toArray('test' + new Date().toISOString().slice(0,16), 'utf8')), // not random, just in case some failure prevents the saving of this data.
                 counterparty: 'self'
             } as GetPublicKeyArgs
             setCustomInstructions(instructions as MNEETokenInstructions)
@@ -168,7 +160,10 @@ function FundMetanet() {
     return (
         <Stack direction="column" alignItems="center" justifyContent="space-between" spacing={3}>
             {!address 
-            ? <Button onClick={getFundingAddress}>Create Deposit Address</Button> 
+            ? <>
+                <Typography textAlign='center' variant="caption" color="text.secondary">Get MNEE from an external wallet.</Typography>
+                <Button variant='contained' onClick={getFundingAddress}>Create Deposit Address</Button> 
+            </>
             : <>
                 <Typography variant="subtitle1">Send MNEE to your Metanet Wallet</Typography>
                 <QRCodeCanvas value={address} size={160} />

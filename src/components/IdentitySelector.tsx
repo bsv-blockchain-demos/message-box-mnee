@@ -1,7 +1,8 @@
 import { Stack, Typography, IconButton } from '@mui/material'
-import { IdentitySearchField, IdentityCard, Identity } from '@bsv/identity-react'
+import { IdentityCard, Identity } from '@bsv/identity-react'
 import { useTheme } from '@mui/material/styles'
-import { Clear } from '@mui/icons-material'
+import { Clear, Label as LabelIcon } from '@mui/icons-material'
+import CustomIdentitySearchField from './CustomIdentitySearchField'
 
 interface IdentitySelectorProps {
   readonly selectedIdentity: Identity | null;
@@ -14,18 +15,21 @@ function IdentitySelector({ selectedIdentity, setSelectedIdentity }: IdentitySel
   // Using type assertion to work around the Material UI version mismatch
   const compatTheme = theme as any
 
+  if (!selectedIdentity) {
+    return (
+      <Stack direction="column" alignItems="center" justifyContent="space-between">
+        <CustomIdentitySearchField theme={compatTheme} onIdentitySelected={setSelectedIdentity} />
+        <Typography variant="body1" color="text.primary">Works with email, X handle, etc.</Typography>
+        <Typography variant="caption" color="text.secondary">Make yourself discoverable with <a href="https://socialcert.net" target="_blank" rel="noopener noreferrer">SocialCert</a></Typography>
+      </Stack>
+    )
+  }
   return (
-    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={3}>
-      <Typography variant="h5">Pay</Typography>
-      {selectedIdentity
-        ? <>
-          <IdentityCard identityKey={selectedIdentity.identityKey} themeMode={compatTheme.palette.mode} />
-          <IconButton onClick={() => setSelectedIdentity(null)} size="small">
-            <Clear />
-          </IconButton>
-        </>
-        : <IdentitySearchField theme={compatTheme} onIdentitySelected={setSelectedIdentity} />
-      }
+    <Stack direction="row" alignItems="center" justifyContent="space-between">
+      <IdentityCard identityKey={selectedIdentity.identityKey} themeMode={compatTheme.palette.mode} />
+      <IconButton onClick={() => setSelectedIdentity(null)} size="small">
+        <Clear />
+      </IconButton>
     </Stack>
   )
 }

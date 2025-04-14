@@ -1,4 +1,4 @@
-import { Button, Stack, useTheme } from '@mui/material';
+import { Button, ButtonGroup, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 function Menu() {
@@ -6,45 +6,37 @@ function Menu() {
   const theme = useTheme();
 
   return (
-    <Stack 
-      direction="row" 
-      spacing={2} 
-      sx={{ 
-        padding: 2,
-        backgroundColor: theme.palette.mode === 'dark' ? '#242424' : '#f5f5f5',
+    <ButtonGroup 
+    variant="text" 
+    size="large"
+      color="primary" 
+      sx={{
+        backgroundColor: theme.palette.mode === 'dark' ? '#242424' : '#eaeaea',
         borderRadius: 1
       }}
     >
       <Button 
-        variant="contained" 
-        color="primary" 
         onClick={() => navigate('/')}
       >
-        Balance & History
+        Identity Payment
       </Button>
       <Button 
-        variant="contained" 
-        color="primary" 
+        onClick={() => navigate('/tokens')}
+      >
+        Tokens
+      </Button>
+      <Button 
         onClick={() => navigate('/fund')}
       >
-        Import Funds
+        Get Funds
       </Button>
       <Button 
-        variant="contained" 
-        color="primary" 
         onClick={() => navigate('/address')}
       >
         Pay Address
       </Button>
-      <Button 
-        variant="contained" 
-        color="primary" 
-        onClick={() => navigate('/pay')}
-      >
-        Identity Payment
-      </Button>
-    </Stack>
-  );
+    </ButtonGroup>
+  )
 }
 
 export default Menu;

@@ -1,9 +1,6 @@
-import { Transaction, Utils, Beef, WhatsOnChain, Script, Spend, UnlockingScript } from "@bsv/sdk";
-import { TokenTransfer } from '../mnee/TokenTransfer'
-import { WalletInterface } from "@bsv/sdk";
-import { ListOutputsResult, SatoshisPerKilobyte } from "@bsv/sdk";
-import { parseInscription } from "../pages/FundMetanet";
-import { MNEETokenInstructions } from "../mnee/TokenTransfer";
+import { Transaction, Utils, Beef, WalletInterface, ListOutputsResult } from "@bsv/sdk";
+import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
+import { parseInscription } from "../pages/FundMetanet"
 
 export const prodApprover = '020a177d6a5e6f3a8689acd2e313bd1cf0dcf5a243d1cc67b7218602aee9e04b2f'
 export const prodAddress = '1inHbiwj2jrEcZPiSYnfgJ8FmS1Bmk4Dh'
@@ -12,18 +9,6 @@ export const mneeApi = 'https://proxy-api.mnee.net'
 export const mneeApiToken = '92982ec1c0975f31979da515d46bae9f'
 export const gorillaPoolApi = 'https://ordinals.1sat.app'
 export const feeAddress = '19Vq2TV8aVhFNLQkhDMdnEQ7zT96x6F3PK'
-export const fees = [
-  {
-    "min": 0,
-    "max": 1000000,
-    "fee": 100
-  },
-  {
-    "min": 1000001,
-    "max": 9007199254740991,
-    "fee": 1000
-  }
-]
 
 export const fetchBeef = async (txid: string): Promise<number[]> => {
   const beef = await (await fetch(`${gorillaPoolApi}/v5/tx/${txid}/beef`)).arrayBuffer()

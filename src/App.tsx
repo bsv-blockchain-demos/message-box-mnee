@@ -3,7 +3,7 @@ import Header from './components/Header'
 import FundMetanet from './pages/FundMetanet'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Menu from './components/Menu'
-import Balance from './pages/Balance'
+import Balance from './pages/Tokens'
 import P2Identity from './pages/P2Identity'
 import P2Address from './pages/P2Address'
 
@@ -15,9 +15,9 @@ function App() {
           <Header />
           <Menu />
           <Routes>
-            <Route path="/" element={<Balance />} />
+            <Route path="/tokens" element={<Balance />} />
             <Route path="/fund" element={<FundMetanet />} />
-            <Route path="/pay" element={<P2Identity />} />
+            <Route path="/" element={<P2Identity />} />
             <Route path="/address" element={<P2Address />} />
           </Routes>
         </Stack>

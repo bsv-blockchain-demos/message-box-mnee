@@ -7,7 +7,7 @@ import Balance from './pages/Tokens'
 import P2Identity from './pages/P2Identity'
 import P2Address from './pages/P2Address'
 
-function App() {  
+function App() {
   return (
     <Container>
       <BrowserRouter>

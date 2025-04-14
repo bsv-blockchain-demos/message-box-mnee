@@ -7,34 +7,33 @@ function Menu() {
 
   return (
     <ButtonGroup 
-    variant="text" 
-    size="large"
+      variant="text" 
+      size="large"
       color="primary" 
       sx={{
-        backgroundColor: theme.palette.mode === 'dark' ? '#242424' : '#eaeaea',
+        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
         borderRadius: 1
       }}
     >
-      <Button 
-        onClick={() => navigate('/')}
-      >
-        Identity Payment
-      </Button>
-      <Button 
-        onClick={() => navigate('/tokens')}
-      >
-        Tokens
-      </Button>
-      <Button 
-        onClick={() => navigate('/fund')}
-      >
-        Get Funds
-      </Button>
-      <Button 
-        onClick={() => navigate('/address')}
-      >
-        Pay Address
-      </Button>
+      {[
+        { path: '/', label: 'Pay Identity' },
+        { path: '/tokens', label: 'Tokens' },
+        { path: '/fund', label: 'Get Funds' },
+        { path: '/address', label: 'Pay Address' }
+      ].map((item) => (
+        <Button
+          key={item.path}
+          onClick={() => navigate(item.path)}
+          sx={{
+            backgroundColor: location.pathname === item.path ? 
+              theme.palette.primary.main + '33' : 'transparent',
+            color: location.pathname === item.path ? 
+              theme.palette.primary.main : theme.palette.text.primary
+          }}
+        >
+          {item.label}
+        </Button>
+      ))}
     </ButtonGroup>
   )
 }

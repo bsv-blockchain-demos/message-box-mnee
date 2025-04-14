@@ -158,7 +158,7 @@ function FundMetanet() {
     }, [wallet, address, customInstructions])
 
     return (
-        <Stack direction="column" alignItems="center" justifyContent="space-between" spacing={3}>
+        <Stack direction="column" alignItems="center" justifyContent="space-between" spacing={3} sx={{ pb: 5 }}>
             {!address 
             ? <>
                 <Typography textAlign='center' variant="caption" color="text.secondary">Get MNEE from an external wallet.</Typography>

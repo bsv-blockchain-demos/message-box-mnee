@@ -1,4 +1,4 @@
-import { Stack, Typography, IconButton } from '@mui/material'
+import { Stack, Typography, IconButton, Link } from '@mui/material'
 import { IdentityCard, Identity } from '@bsv/identity-react'
 import { useTheme } from '@mui/material/styles'
 import { Clear, Label as LabelIcon } from '@mui/icons-material'
@@ -20,7 +20,9 @@ function IdentitySelector({ selectedIdentity, setSelectedIdentity }: IdentitySel
       <Stack direction="column" alignItems="center" justifyContent="space-between">
         <CustomIdentitySearchField theme={compatTheme} onIdentitySelected={setSelectedIdentity} />
         <Typography variant="body1" color="text.primary">Works with email, X handle, etc.</Typography>
-        <Typography variant="caption" color="text.secondary">Make yourself discoverable with <a href="https://socialcert.net" target="_blank" rel="noopener noreferrer">SocialCert</a></Typography>
+        <Typography variant="caption" color="text.secondary">
+          Make yourself discoverable with <Link href="https://socialcert.net" target="_blank" rel="noopener noreferrer" color="primary">SocialCert</Link>
+        </Typography>
       </Stack>
     )
   }

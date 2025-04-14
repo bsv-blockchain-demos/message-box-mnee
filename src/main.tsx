@@ -7,6 +7,7 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import Theme from './theme'
 import { WalletProvider } from './context/WalletContext'
+import './main.css'
 
 const rootElement = document.getElementById('root')
 

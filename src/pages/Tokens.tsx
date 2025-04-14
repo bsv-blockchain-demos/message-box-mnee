@@ -12,7 +12,7 @@ export default function Tokens
     }, [getBalance])
 
     return (
-      <Stack width="100%" maxWidth={640}>
+      <Stack width="100%" maxWidth={640} sx={{ pb: 5 }}>
         <Typography textAlign='center' variant="caption" color="text.secondary">Your available MNEE tokens.</Typography>
         <Stack direction="column" width="100%" sx={{ mb: 5 }}>
           <Stack direction="row" spacing={2} sx={{ width: '100%', py: 1, fontWeight: 'bold', borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>

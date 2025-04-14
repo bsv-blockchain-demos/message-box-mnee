@@ -4,8 +4,8 @@ const ThemedMneeLogo = () => {
 
   const background = 'transparent'
   const theme = useTheme()
-  const primary = '#2F6134'
-  const secondary = '#ffeda5'
+  const primary = theme.palette.mode === 'dark' ? 'white' : '#2F6134'
+  const secondary = theme.palette.mode === 'dark' ? '#2F6134' : '#ffeda5'
 
   return (
     <div style={{ width: 150 }}>

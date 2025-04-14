@@ -104,7 +104,7 @@ function P2Address() {
   }
 
   return (
-    <Stack spacing={2} width="100%" maxWidth="320px" alignItems="center" justifyContent="center">
+    <Stack spacing={2} width="100%" maxWidth="320px" alignItems="center" justifyContent="center" sx={{ pb: 5 }}>
       <Typography textAlign='center' variant="caption" color="text.secondary">Send MNEE to an external wallet.</Typography>
       <TextField
         fullWidth

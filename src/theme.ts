@@ -5,12 +5,15 @@ import { createTheme } from '@mui/material/styles'
 // Define custom spacing function compatible with Spacing type
 const customSpacing = (factor: number): string => `${8 * factor}px`
 
+const ourPrimary = '#2F6134'
+const ourDarkPrimary = '#b0d9b4'
+
 // Create custom theme using createTheme
 const Theme = createTheme({
   palette: {
     mode: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     primary: {
-      main: '#2F6134',
+      main: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary : ourPrimary,
     },
     secondary: {
       main: '#ffeda5',
@@ -48,12 +51,23 @@ const Theme = createTheme({
   // Override default MUI spacing with custom spacing function
   spacing: customSpacing,
   components: {
+    MuiLink: {
+      styleOverrides: {
+        root: {
+          color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary : ourPrimary,
+          textDecoration: 'none',
+          '&:hover': {
+            textDecoration: 'underline',
+          },
+      },
+    },
+  },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
             '&.Mui-focused fieldset': {
-              borderColor: '#2F6134',
+              borderColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary : ourPrimary,
             },
           },
         },
@@ -74,33 +88,33 @@ const Theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         '.MuiFilledInput-underline:after': {
-          borderBottomColor: '#2F6134 !important',
+          borderBottomColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         '.MuiFilledInput-underline.Mui-focused:after': {
-          borderBottomColor: '#2F6134 !important',
+          borderBottomColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         // Directly target the specific CSS class identified
         '.css-1312ppl-MuiSvgIcon-root': {
-          color: '#2F6134 !important',
+          color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         // As a fallback also keep general targeting
         '.MuiInputAdornment-root .MuiSvgIcon-root[data-testid="SearchIcon"]': {
-          color: '#2F6134 !important',
+          color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         '.MuiInputBase-root .MuiInputAdornment-root svg': {
-          color: '#2F6134 !important',
+          color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         'body .MuiInputAdornment-root svg[data-testid="SearchIcon"], body .MuiInputAdornment-root svg:first-child': {
-          color: '#2F6134 !important',
+          color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         'svg[data-mui-test="SearchIcon"]': {
-          color: '#2F6134 !important',
+          color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         'svg[aria-label="search"]': {
-          color: '#2F6134 !important',
+          color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
         '.search-icon, .searchIcon, .SearchIcon, [class*="SearchIcon"]': {
-          color: '#2F6134 !important',
+          color: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
         },
       },
     },
@@ -108,16 +122,15 @@ const Theme = createTheme({
       styleOverrides: {
         underline: {
           '&:after': {
-            borderBottomColor: '#2F6134',
+            borderBottomColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
           },
           '&.Mui-focused:after': {
-            borderBottomColor: '#2F6134',
+            borderBottomColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? ourDarkPrimary + ' !important' : ourPrimary + ' !important',
           },
         },
       },
     },
   },
-
 })
 
 export default Theme // Export custom theme

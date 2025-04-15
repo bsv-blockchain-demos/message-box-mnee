@@ -1,5 +1,5 @@
 import { MessageBoxClient, PeerMessage } from '@bsv/p2p'
-import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOutputsResult, Transaction, Random, AuthFetch } from '@bsv/sdk'
+import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOutputsResult, Transaction, Random, AuthFetch, OutpointString } from '@bsv/sdk'
 import { Logger } from './Logger.js'
 import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'
@@ -183,8 +183,20 @@ export class MneePeerPayClient extends MessageBoxClient {
 
     const { publicKey: originator } = await this.peerPayWalletClient.getPublicKey({ identityKey: true })
 
-    const atomicBEEF = await MneePeerPayClient.fetchBeef(tx.id('hex'))
+    // construct an atomic beef from the current txs plus inputs.
+    await Promise.all(tx.inputs.map(async input => {
+      const txid = input.sourceTXID as string
+      const createdInput = tokensOnlyTx.inputs.find(tx => tx.sourceTXID === txid)
+      if (createdInput) {
+        input.sourceTransaction = createdInput.sourceTransaction
+      } else {
+        const atomicBeefForThisInput = await MneePeerPayClient.fetchBeef(txid)
+        input.sourceTransaction = Transaction.fromAtomicBEEF(atomicBeefForThisInput)
+      }
+    }))
     
+    const atomicBEEF = tx.toAtomicBEEF()
+
     const spent = tokensOnlyTx.inputs.map(input => (input.sourceTXID + '.' + input.sourceOutputIndex) as OutpointString)
     await Promise.all(spent.map(async output => {
       const { relinquished } = await this.peerPayWalletClient.relinquishOutput({

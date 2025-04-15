@@ -1,5 +1,5 @@
 import { MessageBoxClient, PeerMessage } from '@bsv/p2p'
-import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOutputsResult, Transaction, Random, AuthFetch, OutpointString } from '@bsv/sdk'
+import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOutputsResult, Transaction, Random, OutpointString } from '@bsv/sdk'
 import { Logger } from './Logger.js'
 import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'
@@ -44,7 +44,6 @@ export interface IncomingPayment {
  */
 export class MneePeerPayClient extends MessageBoxClient {
   private readonly peerPayWalletClient: WalletClient
-  private _authFetchInstance?: AuthFetch
 
   constructor(config: PeerPayClientConfig) {
     const { messageBoxHost = 'https://messagebox.babbage.systems', walletClient, enableLogging = false } = config
@@ -150,13 +149,6 @@ export class MneePeerPayClient extends MessageBoxClient {
     const { rawtx: responseRawtx } = await response.json()
     if (!responseRawtx) throw new Error('Failed to broadcast transaction')
     return { tokensOnlyTx: tx, tx: Transaction.fromBinary(Utils.toArray(responseRawtx, 'base64')), keyID }
-  }
-
-  private get authFetchInstance(): AuthFetch {
-    if (!this._authFetchInstance) {
-      this._authFetchInstance = new AuthFetch(this.peerPayWalletClient)
-    }
-    return this._authFetchInstance
   }
 
   /**
@@ -354,7 +346,7 @@ export class MneePeerPayClient extends MessageBoxClient {
    * @param {IncomingPayment} payment - The payment object containing transaction details.
    * @returns {Promise<void>} Resolves when the payment is either acknowledged or refunded.
    */
-  async rejectPayment(payment: IncomingPayment): Promise<void> {
+  async rejectPayment(_: IncomingPayment): Promise<void> {
     throw new Error('Not implemented yet')
     // Logger.log(`[PP CLIENT] Rejecting payment: ${JSON.stringify(payment, null, 2)}`);
     // Logger.log('[PP CLIENT] Accepting payment before refunding...');

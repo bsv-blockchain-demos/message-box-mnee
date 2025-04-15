@@ -1,7 +1,7 @@
 import { Stack, Typography, IconButton, Link } from '@mui/material'
 import { IdentityCard, Identity } from '@bsv/identity-react'
 import { useTheme } from '@mui/material/styles'
-import { Clear, Label as LabelIcon } from '@mui/icons-material'
+import { Clear } from '@mui/icons-material'
 import CustomIdentitySearchField from './CustomIdentitySearchField'
 
 interface IdentitySelectorProps {

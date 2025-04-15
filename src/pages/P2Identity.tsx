@@ -1,5 +1,5 @@
 import AmountSelector from '../components/AmountSelector'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import IdentitySelector from '../components/IdentitySelector'

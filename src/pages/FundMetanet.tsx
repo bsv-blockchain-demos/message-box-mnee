@@ -1,6 +1,6 @@
 import { Button, CircularProgress, Stack, Typography } from '@mui/material'
 import { QRCodeCanvas } from 'qrcode.react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { GetPublicKeyArgs, Utils, PublicKey, Transaction, OP, Script, Hash } from '@bsv/sdk'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'

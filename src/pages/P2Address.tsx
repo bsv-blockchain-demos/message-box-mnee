@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Stack, TextField, Typography } from '@mui/material'
+import { Button, CircularProgress, Stack, TextField, Typography } from '@mui/material'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import AmountSelector from '../components/AmountSelector'
@@ -8,6 +8,7 @@ import { MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { GetPublicKeyArgs, OutpointString, PublicKey } from '@bsv/sdk'
 
 function P2Address() {
+  const [loading, setLoading] = useState<boolean>(false)
   const [address, setAddress] = useState('')
   const [amount, setAmount] = useState<number>(0)
   const { wallet, tokens } = useWallet()
@@ -34,6 +35,7 @@ function P2Address() {
 
   const handlePayment = async () => {
     try {
+      setLoading(true)
       if (!address) {
         toast.error('Please enter a valid address')
         return
@@ -100,6 +102,8 @@ function P2Address() {
       }
     } catch (error) {
       toast.error(`Payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -119,10 +123,11 @@ function P2Address() {
         onClick={handlePayment} 
         variant="contained" 
         color="primary" 
-        disabled={amount <= 0 || !address}
+        disabled={amount <= 0 || !address || loading}
       >
         Send
       </Button>
+      {loading && <CircularProgress />}
     </Stack>
   )
 }

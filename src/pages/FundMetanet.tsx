@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from '@mui/material'
+import { Button, CircularProgress, Stack, Typography } from '@mui/material'
 import { QRCodeCanvas } from 'qrcode.react'
 import { useCallback, useEffect, useState } from 'react'
 import { GetPublicKeyArgs, Utils, PublicKey, Transaction, OP, Script, Hash } from '@bsv/sdk'
@@ -69,6 +69,7 @@ export const parseInscription = (script: Script) => {
 
 function FundMetanet() {
     const { wallet } = useWallet()
+    const [loading, setLoading] = useState<boolean>(false)
     const [customInstructions, setCustomInstructions] = useState<MNEETokenInstructions | null>(null)
     const [address, setAddress] = useState<string>('')
 
@@ -128,6 +129,7 @@ function FundMetanet() {
 
     const listenForFundsAndInteralize = useCallback(async () => {
         try {
+            setLoading(true)
             if (!await wallet.isAuthenticated()) return
             console.log('listening for funds', address)
             const recent = await getUtxos(address)
@@ -154,6 +156,8 @@ function FundMetanet() {
             }))
         } catch (error) {
             console.error('Failed to listen for funds:', error)
+        } finally {
+            setLoading(false)
         }
     }, [wallet, address, customInstructions])
 
@@ -169,8 +173,9 @@ function FundMetanet() {
                 <QRCodeCanvas value={address} size={160} />
                 <Typography variant="body1">{address}</Typography>
                 <Typography variant="overline">Only Send MNEE</Typography>
-                <Button variant='contained' onClick={listenForFundsAndInteralize}>Check For Incoming Funds</Button>
+                <Button variant='contained' disabled={loading} onClick={listenForFundsAndInteralize}>Check For Incoming Funds</Button>
             </>}
+            {loading && <CircularProgress />}
         </Stack>
     )
 }

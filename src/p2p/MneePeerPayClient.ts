@@ -194,7 +194,7 @@ export class MneePeerPayClient extends MessageBoxClient {
         input.sourceTransaction = Transaction.fromAtomicBEEF(atomicBeefForThisInput)
       }
     }))
-    
+
     const atomicBEEF = tx.toAtomicBEEF()
 
     const spent = tokensOnlyTx.inputs.map(input => (input.sourceTXID + '.' + input.sourceOutputIndex) as OutpointString)
@@ -239,7 +239,7 @@ export class MneePeerPayClient extends MessageBoxClient {
     }
 
     // Ensure the recipient is included before sending
-    await this.sendMessage({
+    return await this.sendMessage({
       recipient: beneficiary,
       messageBox: MNEE_PAYMENT_MESSAGEBOX,
       body: payment

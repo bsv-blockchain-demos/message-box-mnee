@@ -88,7 +88,7 @@ export class MneePeerPayClient extends MessageBoxClient {
       const inscription = parseInscription(output.lockingScript)
       unitsIn += parseInt(inscription?.amt || '0')
       console.log({ token, inscription })
-      const customInstructions = JSON.parse(token?.customInstructions || '{}') as MNEETokenInstructions
+      const customInstructions = JSON.parse(token?.customInstructions ?? '{}') as MNEETokenInstructions
       tx.addInput({
         sourceTXID: txid,
         sourceOutputIndex: parseInt(vout),
@@ -104,7 +104,7 @@ export class MneePeerPayClient extends MessageBoxClient {
   
     const remainder = unitsIn - units - fee
 
-    const keyID = Utils.toBase64(Random(16))
+    const keyID = Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,16), 'utf8'))
 
     const { publicKey: beneficiaryKey } = await this.peerPayWalletClient.getPublicKey({
       protocolID: [2, 'Pay MNEE'],

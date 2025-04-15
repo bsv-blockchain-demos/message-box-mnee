@@ -11,7 +11,7 @@ function P2Address() {
   const [loading, setLoading] = useState<boolean>(false)
   const [address, setAddress] = useState('')
   const [amount, setAmount] = useState<number>(0)
-  const { wallet, tokens } = useWallet()
+  const { wallet, tokens, getBalance } = useWallet()
 
   const handleAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(event.target.value)
@@ -22,7 +22,7 @@ function P2Address() {
         console.log('creating change address')
         const instructions = {
             protocolID: [2, 'Pay MNEE'],
-            keyID: 'change',
+            keyID: 'change' + new Date().toISOString().slice(0, 10),
             counterparty: 'self'
         } as GetPublicKeyArgs
         const { publicKey } = await wallet.getPublicKey(instructions)
@@ -73,7 +73,6 @@ function P2Address() {
           })
           if (!relinquished) {
             toast.error('Failed to relinquish output')
-            return
           }
         }))
         const { accepted } = await wallet.internalizeAction({
@@ -100,6 +99,7 @@ function P2Address() {
       } else {
         toast.error('MNEE broadcast failed')
       }
+      getBalance()
     } catch (error) {
       toast.error(`Payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {

@@ -114,7 +114,7 @@ function FundMetanet() {
             console.log('attempting to fund wallet')
             const instructions = {
                 protocolID: [2, 'Pay MNEE'],
-                keyID: Utils.toBase64(Utils.toArray('test' + new Date().toISOString().slice(0,16), 'utf8')), // not random, just in case some failure prevents the saving of this data.
+                keyID: Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,16), 'utf8')), // not random, just in case some failure prevents the saving of this data.
                 counterparty: 'self'
             } as GetPublicKeyArgs
             setCustomInstructions(instructions as MNEETokenInstructions)

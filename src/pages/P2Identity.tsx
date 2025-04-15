@@ -1,5 +1,5 @@
 import AmountSelector from '../components/AmountSelector'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import IdentitySelector from '../components/IdentitySelector'
@@ -11,7 +11,27 @@ export default function P2Identity () {
     const [amount, setAmount] = useState<number>(0)
     const { wallet, tokens, balance, getBalance, mneePeerPayClient } = useWallet()
     const [selectedIdentity, setSelectedIdentity] = useState<Identity | null>(null)
-  
+
+    const getInboundPayments = useCallback(async () => {
+      try {
+        setLoading(true)
+        const payments = await mneePeerPayClient.listIncomingPayments()
+        if (payments.length === 0) {
+          toast.info('No inbound payments found')
+          return
+        }
+        await Promise.all(payments.map(async payment => {
+          await mneePeerPayClient.acceptPayment(payment)
+        }))
+        getBalance()
+      } catch (error) {
+        toast.error('Failed to list payments')
+        console.error({ error })
+      } finally {
+        setLoading(false)
+      }
+    }, [mneePeerPayClient])
+
     const pay = useCallback(async () => {
       try {
         setLoading(true)
@@ -44,9 +64,10 @@ export default function P2Identity () {
     
     return (<Stack direction="column" alignItems="center" justifyContent="space-between" spacing={3} sx={{ pb: 5 }}>
       <Typography textAlign='center' variant="caption" color="text.secondary">Send MNEE to a certified identity.</Typography>
+      {loading && <CircularProgress />}
+      <Button onClick={getInboundPayments} variant="contained" color="primary" disabled={loading}>Check Inbound Payments</Button>
       <IdentitySelector selectedIdentity={selectedIdentity} setSelectedIdentity={setSelectedIdentity} />
       <AmountSelector setAmount={setAmount} />
       <Button onClick={pay} variant="contained" color="primary" disabled={amount === 0 || !selectedIdentity || loading}>Send</Button>
-      {loading && <CircularProgress />}
     </Stack>)
 }

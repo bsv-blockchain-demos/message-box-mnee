@@ -1,14 +1,14 @@
-import React, { useState, useContext, useMemo, useEffect } from "react"
+import React, { useState, useContext, useMemo, useEffect, useCallback } from "react"
 import { WalletClient, ListOutputsResult, Beef, WalletOutput } from "@bsv/sdk"
 import Mnee from "mnee"
 import { parseInscription } from "../pages/FundMetanet"
 import { MneePeerPayClient } from "../p2p/MneePeerPayClient"
 
 
-const mneeApiToken = import.meta.env.MNEE_API_TOKEN
-const tokenId = import.meta.env.TOKEN_ID
+const mneeApiToken = import.meta.env.VITE_MNEE_API_TOKEN
+const tokenId = import.meta.env.VITE_TOKEN_ID
 
-const wallet = new WalletClient('json-api')
+const wallet = new WalletClient()
 const mnee = new Mnee(mneeApiToken)
 const mneePeerPayClient = new MneePeerPayClient({
     walletClient: wallet,
@@ -57,42 +57,44 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     const [tokens, setTokens] = useState<ListOutputsResult>({} as ListOutputsResult)
     const [displayTokens, setDisplayTokens] = useState<any[]>([])
 
-    const getBalance = async () => {
-        await wallet.isAuthenticated()
+    const getBalance = useCallback(async () => {
+        const { authenticated } = await wallet.isAuthenticated()
+        console.log({ authenticated })
         const ts = await wallet.listOutputs({
             basket: 'MNEE tokens',
             include: 'entire transactions',
             includeCustomInstructions: true
         })
-        const spendable = { ...ts }
-        const spendableTokens = spendable.outputs.filter(token => token.spendable)
-        spendable.outputs = spendableTokens
-        setTokens(spendable)
+        console.log({ ts })
+        setTokens(ts)
         let total = 0
         const disp: any[] = []
-        spendable.outputs.forEach((token: WalletOutput) => {
+        ts.outputs.forEach((token: WalletOutput) => {
             let displayToken: any = { ...token }
             // get the tx from the beef
             const [txid, vout] = token.outpoint.split('.')
             const beef = Beef.fromBinary(ts.BEEF as number[])
             const tx = beef.findAtomicTransaction(txid)
+            console.log({ tx })
             if (!tx) return
             const output = tx.outputs[parseInt(vout)]
             if (!output) return
             const script = output.lockingScript
             const inscription = parseInscription(script)
+            console.log({ inscription, tokenId })
             if (tokenId !== inscription.id) return
             if (inscription.op !== 'transfer') return
             const amt = parseInt(inscription.amt)
             displayToken.amt = formatToUSD(amt)
             displayToken.txid = txid
             displayToken.vout = vout
+            console.log({ displayToken })
             total += amt
             disp.push(displayToken)
         })
         setBalance(total)
         setDisplayTokens(disp)
-    }
+    }, [wallet, mnee, mneePeerPayClient])
 
     useEffect(() => {
         getBalance()

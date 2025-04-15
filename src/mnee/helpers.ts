@@ -2,10 +2,10 @@ import { Transaction, Utils, Beef, WalletInterface, ListOutputsResult } from "@b
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
 
-const mneeApiToken = import.meta.env.MNEE_API_TOKEN
-const mneeApi = import.meta.env.MNEE_API
-const feeAddress = import.meta.env.FEE_ADDRESS as string
-const gorillaPoolApi = import.meta.env.GORILLA_POOL_API
+const mneeApiToken = import.meta.env.VITE_MNEE_API_TOKEN
+const mneeApi = import.meta.env.VITE_MNEE_API
+const feeAddress = import.meta.env.VITE_FEE_ADDRESS as string
+const gorillaPoolApi = import.meta.env.VITE_GORILLA_POOL_API
 
 // export const prodApprover = '020a177d6a5e6f3a8689acd2e313bd1cf0dcf5a243d1cc67b7218602aee9e04b2f'
 // export const prodAddress = '1inHbiwj2jrEcZPiSYnfgJ8FmS1Bmk4Dh'

@@ -4,10 +4,10 @@ import { Logger } from './Logger.js'
 import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'
 
-const mneeApiToken = import.meta.env.MNEE_API_TOKEN
-const mneeApi = import.meta.env.MNEE_API
-const feeAddress = import.meta.env.FEE_ADDRESS as string
-const gorillaPoolApi = import.meta.env.GORILLA_POOL_API
+const mneeApiToken = import.meta.env.VITE_MNEE_API_TOKEN
+const mneeApi = import.meta.env.VITE_MNEE_API
+const feeAddress = import.meta.env.VITE_FEE_ADDRESS as string
+const gorillaPoolApi = import.meta.env.VITE_GORILLA_POOL_API
 
 export const MNEE_PAYMENT_MESSAGEBOX = 'mnee_payment_inbox'
 
@@ -65,7 +65,7 @@ export class MneePeerPayClient extends MessageBoxClient {
     tokens: ListOutputsResult,
     beneficiary: string,
     units: number
-  ): Promise<{ tx: Transaction, keyID: Base64String }> {
+  ): Promise<{ tokensOnlyTx: Transaction, tx: Transaction, keyID: Base64String }> {
     const tx = new Transaction()
     let unitsIn = 0
   
@@ -149,7 +149,7 @@ export class MneePeerPayClient extends MessageBoxClient {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
     const { rawtx: responseRawtx } = await response.json()
     if (!responseRawtx) throw new Error('Failed to broadcast transaction')
-    return { tx: Transaction.fromBinary(Utils.toArray(responseRawtx, 'base64')), keyID }
+    return { tokensOnlyTx: tx, tx: Transaction.fromBinary(Utils.toArray(responseRawtx, 'base64')), keyID }
   }
 
   private get authFetchInstance(): AuthFetch {
@@ -176,20 +176,53 @@ export class MneePeerPayClient extends MessageBoxClient {
       throw new Error('Invalid payment details: beneficiary and valid units are required')
     }
 
-    const { tx, keyID } = await this.createTx(tokens, beneficiary, units)
+    const { tokensOnlyTx, tx, keyID } = await this.createTx(tokens, beneficiary, units)
     if (!tx || !keyID) {
       throw new Error('Failed to create transaction')
     }
 
     const { publicKey: originator } = await this.peerPayWalletClient.getPublicKey({ identityKey: true })
 
-    const transaction = await MneePeerPayClient.fetchBeef(tx.id('hex'))
+    const atomicBEEF = await MneePeerPayClient.fetchBeef(tx.id('hex'))
+    
+    const spent = tokensOnlyTx.inputs.map(input => (input.sourceTXID + '.' + input.sourceOutputIndex) as OutpointString)
+    await Promise.all(spent.map(async output => {
+      const { relinquished } = await this.peerPayWalletClient.relinquishOutput({
+        basket: 'MNEE tokens',
+        output
+      })
+      if (!relinquished) {
+        console.error('Failed to relinquish output')
+      }
+    }))
+    
+    const { accepted } = await this.peerPayWalletClient.internalizeAction({
+      tx: atomicBEEF,
+      description: 'Receive MNEE tokens',
+      labels: ['MNEE'],
+      outputs: [{
+        outputIndex: 1,
+        protocol: 'basket insertion',
+        insertionRemittance: {
+          basket: 'MNEE tokens',
+          customInstructions: JSON.stringify({
+            protocolID: [2, 'Pay MNEE'],
+            keyID,
+            counterparty: 'self'
+          }),
+          tags: ['MNEE']
+        }
+      }]
+    })
+    if (!accepted) {
+      console.error('Failed to internalize action')
+    }
 
     const payment = {
       keyID,
       originator,
       beneficiary,
-      transaction,
+      transaction: atomicBEEF,
       units
     }
 

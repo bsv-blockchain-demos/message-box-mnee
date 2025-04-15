@@ -14,8 +14,8 @@ import {
     WalletProtocol,
   } from "@bsv/sdk";
 
-const prodApprover = import.meta.env.APPROVER
-const prodTokenId = import.meta.env.TOKEN_ID
+const prodApprover = import.meta.env.VITE_APPROVER
+const prodTokenId = import.meta.env.VITE_TOKEN_ID
 
 export type MNEETokenInstructions = {
     protocolID: WalletProtocol

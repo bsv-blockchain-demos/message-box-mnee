@@ -82,11 +82,11 @@ function P2Address() {
             outputIndex: 1,
             protocol: 'basket insertion',
             insertionRemittance: {
-                basket: 'MNEE tokens',
-                customInstructions: JSON.stringify(instructions),
-                tags: ['MNEE']
+              basket: 'MNEE tokens',
+              customInstructions: JSON.stringify(instructions),
+              tags: ['MNEE']
             }
-        }]
+          }]
         })
         if (!accepted) {
           toast.error('Metanet Desktop rejected the change output')

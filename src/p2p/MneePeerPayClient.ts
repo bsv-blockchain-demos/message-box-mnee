@@ -1,5 +1,5 @@
 import { MessageBoxClient, PeerMessage } from '@bsv/p2p'
-import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOutputsResult, Transaction, Random, OutpointString } from '@bsv/sdk'
+import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOutputsResult, Transaction, OutpointString } from '@bsv/sdk'
 import { Logger } from './Logger.js'
 import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'

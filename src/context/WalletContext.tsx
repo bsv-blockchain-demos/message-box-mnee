@@ -8,7 +8,7 @@ import { MneePeerPayClient } from "../p2p/MneePeerPayClient"
 const mneeApiToken = import.meta.env.VITE_MNEE_API_TOKEN
 const tokenId = import.meta.env.VITE_TOKEN_ID
 
-const wallet = new WalletClient()
+const wallet = new WalletClient('react-native')
 const mnee = new Mnee(mneeApiToken)
 const mneePeerPayClient = new MneePeerPayClient({
     walletClient: wallet,
@@ -58,18 +58,20 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     const [displayTokens, setDisplayTokens] = useState<any[]>([])
 
     const getBalance = useCallback(async () => {
-        const { authenticated } = await wallet.isAuthenticated()
-        console.log({ authenticated })
-        const ts = await wallet.listOutputs({
-            basket: 'MNEE tokens',
-            include: 'entire transactions',
-            includeCustomInstructions: true
-        })
-        console.log({ ts })
-        setTokens(ts)
-        let total = 0
-        const disp: any[] = []
-        ts.outputs.forEach((token: WalletOutput) => {
+        try {
+            console.log('Getting balance...')
+            const { authenticated } = await wallet.isAuthenticated()
+            console.log({ authenticated })
+            const ts = await wallet.listOutputs({
+                basket: 'MNEE tokens',
+                include: 'entire transactions',
+                includeCustomInstructions: true
+            })
+            console.log({ ts })
+            setTokens(ts)
+            let total = 0
+            const disp: any[] = []
+            ts.outputs.forEach((token: WalletOutput) => {
             let displayToken: any = { ...token }
             // get the tx from the beef
             const [txid, vout] = token.outpoint.split('.')
@@ -91,9 +93,12 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
             console.log({ displayToken })
             total += amt
             disp.push(displayToken)
-        })
-        setBalance(total)
-        setDisplayTokens(disp)
+            })
+            setBalance(total)
+            setDisplayTokens(disp)
+        } catch (error) {
+            console.error('Error getting balance', error)
+        }
     }, [wallet, mnee, mneePeerPayClient])
 
     useEffect(() => {

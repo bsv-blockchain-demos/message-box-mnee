@@ -3,13 +3,13 @@ import { WalletClient, ListOutputsResult, Beef, WalletOutput } from "@bsv/sdk"
 import Mnee from "mnee"
 import { parseInscription } from "../pages/FundMetanet"
 import { MneePeerPayClient } from "../p2p/MneePeerPayClient"
+import { PROD_TOKEN_ID, PUBLIC_PROD_MNEE_API_TOKEN } from "../mnee/constants"
 
-
-const mneeApiToken = import.meta.env.VITE_MNEE_API_TOKEN
-const tokenId = import.meta.env.VITE_TOKEN_ID
-
-const wallet = new WalletClient('react-native')
-const mnee = new Mnee(mneeApiToken)
+const wallet = new WalletClient()
+const mnee = new Mnee({
+    environment: 'production',
+    apiKey: PUBLIC_PROD_MNEE_API_TOKEN
+})
 const mneePeerPayClient = new MneePeerPayClient({
     walletClient: wallet,
     enableLogging: true
@@ -59,40 +59,33 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     const getBalance = useCallback(async () => {
         try {
-            console.log('Getting balance...')
-            const { authenticated } = await wallet.isAuthenticated()
-            console.log({ authenticated })
             const ts = await wallet.listOutputs({
                 basket: 'MNEE tokens',
                 include: 'entire transactions',
                 includeCustomInstructions: true
             })
-            console.log({ ts })
             setTokens(ts)
             let total = 0
             const disp: any[] = []
             ts.outputs.forEach((token: WalletOutput) => {
-            let displayToken: any = { ...token }
-            // get the tx from the beef
-            const [txid, vout] = token.outpoint.split('.')
-            const beef = Beef.fromBinary(ts.BEEF as number[])
-            const tx = beef.findAtomicTransaction(txid)
-            console.log({ tx })
-            if (!tx) return
-            const output = tx.outputs[parseInt(vout)]
-            if (!output) return
-            const script = output.lockingScript
-            const inscription = parseInscription(script)
-            console.log({ inscription, tokenId })
-            if (tokenId !== inscription.id) return
-            if (inscription.op !== 'transfer') return
-            const amt = parseInt(inscription.amt)
-            displayToken.amt = formatToUSD(amt)
-            displayToken.txid = txid
-            displayToken.vout = vout
-            console.log({ displayToken })
-            total += amt
-            disp.push(displayToken)
+                let displayToken: any = { ...token }
+                // get the tx from the beef
+                const [txid, vout] = token.outpoint.split('.')
+                const beef = Beef.fromBinary(ts.BEEF as number[])
+                const tx = beef.findAtomicTransaction(txid)
+                if (!tx) return
+                const output = tx.outputs[parseInt(vout)]
+                if (!output) return
+                const script = output.lockingScript
+                const inscription = parseInscription(script)
+                if (PROD_TOKEN_ID !== inscription.id) return
+                if (inscription.op !== 'transfer') return
+                const amt = parseInt(inscription.amt)
+                displayToken.amt = formatToUSD(amt)
+                displayToken.txid = txid
+                displayToken.vout = vout
+                total += amt
+                disp.push(displayToken)
             })
             setBalance(total)
             setDisplayTokens(disp)

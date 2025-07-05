@@ -1,10 +1,10 @@
 import React from 'react'
-import { IdentitySearchField, Identity } from '@bsv/identity-react'
+import { IdentitySearchField, IdentityProps } from '@bsv/identity-react'
 import { useTheme } from '@mui/material/styles'
 import { Theme } from '@mui/material'
 
 interface CustomIdentitySearchFieldProps {
-  onIdentitySelected: (identity: Identity) => void;
+  onIdentitySelected: (identity: IdentityProps) => void;
   theme?: Theme; // Optional if you want to allow passing a custom theme
 }
 

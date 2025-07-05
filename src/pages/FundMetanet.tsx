@@ -6,11 +6,7 @@ import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import { MNEEUtxo, Inscription } from 'mnee'
 import { MNEETokenInstructions } from '../mnee/TokenTransfer'
-
-const mneeApiToken = '92982ec1c0975f31979da515d46bae9f';
-const mneeApi = 'https://proxy-api.mnee.net';
-const prodTokenId = 'ae59f3b898ec61acbdb6cc7a245fabeded0c094bf046f35206a3aec60ef88127_0';
-const gorillaPoolApi = 'https://ordinals.1sat.app';
+import { MNEE_PROXY_API_URL, PROD_TOKEN_ID, PUBLIC_PROD_MNEE_API_TOKEN } from '../mnee/constants'
 
 export const parseInscription = (script: Script) => {
     let fromPos: number | undefined;
@@ -75,7 +71,7 @@ function FundMetanet() {
 
     const getUtxos = async (address: string) => {
         try {
-            const response = await fetch(`${mneeApi}/v1/utxos?auth_token=${mneeApiToken}`, {
+            const response = await fetch(`${MNEE_PROXY_API_URL}/v1/utxos?auth_token=${PUBLIC_PROD_MNEE_API_TOKEN}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify([address]),
@@ -91,7 +87,7 @@ function FundMetanet() {
     }
 
     const parseUnitsFromRecentUtxos = async (recent: MNEEUtxo) => {
-        const beef = await (await fetch(`${gorillaPoolApi}/v5/tx/${recent.txid}/beef`)).arrayBuffer()
+        const beef = await (await fetch(`${MNEE_PROXY_API_URL}/v5/tx/${recent.txid}/beef`)).arrayBuffer()
         const bufferArray = new Uint8Array(beef)
         const atomicBEEF = Array.from(bufferArray)
         const tx = Transaction.fromAtomicBEEF(atomicBEEF)
@@ -101,7 +97,7 @@ function FundMetanet() {
         tx.outputs.forEach((output, vout) => {
             if (vout !== recent.vout) return
             const inscription = parseInscription(output.lockingScript)
-            if (prodTokenId !== inscription.id) return
+            if (PROD_TOKEN_ID !== inscription.id) return
             if (inscription.op !== 'transfer') return
             units += parseInt(inscription.amt)
         })

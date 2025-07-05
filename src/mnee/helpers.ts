@@ -1,22 +1,10 @@
 import { Transaction, Utils, Beef, WalletInterface, ListOutputsResult } from "@bsv/sdk";
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
-
-const mneeApiToken = import.meta.env.VITE_MNEE_API_TOKEN
-const mneeApi = import.meta.env.VITE_MNEE_API
-const feeAddress = import.meta.env.VITE_FEE_ADDRESS as string
-const gorillaPoolApi = import.meta.env.VITE_GORILLA_POOL_API
-
-// export const prodApprover = '020a177d6a5e6f3a8689acd2e313bd1cf0dcf5a243d1cc67b7218602aee9e04b2f'
-// export const prodAddress = '1inHbiwj2jrEcZPiSYnfgJ8FmS1Bmk4Dh'
-// export const prodTokenId = 'ae59f3b898ec61acbdb6cc7a245fabeded0c094bf046f35206a3aec60ef88127_0'
-// export const mneeApi = 'https://proxy-api.mnee.net'
-// export const mneeApiToken = '92982ec1c0975f31979da515d46bae9f'
-// export const gorillaPoolApi = 'https://ordinals.1sat.app'
-// export const feeAddress = '19Vq2TV8aVhFNLQkhDMdnEQ7zT96x6F3PK'
+import { PROD_ADDRESS, MNEE_PROXY_API_URL, PUBLIC_PROD_MNEE_API_TOKEN } from './constants'
 
 export const fetchBeef = async (txid: string): Promise<number[]> => {
-  const beef = await (await fetch(`${gorillaPoolApi}/v5/tx/${txid}/beef`)).arrayBuffer()
+  const beef = await (await fetch(`${MNEE_PROXY_API_URL}/v5/tx/${txid}/beef`)).arrayBuffer()
   const bufferArray = new Uint8Array(beef)
   return Array.from(bufferArray)
 }
@@ -81,7 +69,7 @@ export const createTx = async (
 
   // this output is to pay the issuer
   tx.addOutput({
-    lockingScript: new TokenTransfer().lock(feeAddress, fee),
+    lockingScript: new TokenTransfer().lock(PROD_ADDRESS, fee),
     satoshis: 1
   })
 
@@ -94,7 +82,7 @@ export const createTx = async (
 export const cosignBroadcast = async (tx: Transaction) => {
   console.log({ tx: tx.toHex() })
   const base64Tx = Utils.toBase64(tx.toBinary())
-  const response = await fetch(`${mneeApi}/v1/transfer?auth_token=${mneeApiToken}`, {
+  const response = await fetch(`${MNEE_PROXY_API_URL}/v1/transfer?auth_token=${PUBLIC_PROD_MNEE_API_TOKEN}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ rawtx: base64Tx }),

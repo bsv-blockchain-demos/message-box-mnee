@@ -1,13 +1,9 @@
-import { MessageBoxClient, PeerMessage } from '@bsv/p2p'
+import { MessageBoxClient, PeerMessage } from '@bsv/message-box-client'
 import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOutputsResult, Transaction, OutpointString } from '@bsv/sdk'
 import { Logger } from './Logger.js'
 import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'
-
-const mneeApiToken = import.meta.env.VITE_MNEE_API_TOKEN
-const mneeApi = import.meta.env.VITE_MNEE_API
-const feeAddress = import.meta.env.VITE_FEE_ADDRESS as string
-const gorillaPoolApi = import.meta.env.VITE_GORILLA_POOL_API
+import { MNEE_PROXY_API_URL, PROD_ADDRESS, PUBLIC_PROD_MNEE_API_TOKEN } from '../mnee/constants'
 
 export const MNEE_PAYMENT_MESSAGEBOX = 'mnee_payment_inbox'
 
@@ -46,7 +42,7 @@ export class MneePeerPayClient extends MessageBoxClient {
   private readonly peerPayWalletClient: WalletClient
 
   constructor(config: PeerPayClientConfig) {
-    const { messageBoxHost = 'https://messagebox.babbage.systems', walletClient, enableLogging = false } = config
+    const { messageBoxHost = 'https://message-box-us-1.bsvb.tech', walletClient, enableLogging = false } = config
 
     // 🔹 Pass enableLogging to MessageBoxClient
     super({ host: messageBoxHost, walletClient, enableLogging })
@@ -55,7 +51,7 @@ export class MneePeerPayClient extends MessageBoxClient {
   }
 
   static async fetchBeef(txid: string): Promise<number[]> {
-    const beef = await (await fetch(`${gorillaPoolApi}/v5/tx/${txid}/beef`)).arrayBuffer()
+    const beef = await (await fetch(`${MNEE_PROXY_API_URL}/v5/tx/${txid}/beef`)).arrayBuffer()
     const bufferArray = new Uint8Array(beef)
     return Array.from(bufferArray)
   }
@@ -132,7 +128,7 @@ export class MneePeerPayClient extends MessageBoxClient {
   
     // this output is to pay the issuer
     tx.addOutput({
-      lockingScript: new TokenTransfer().lock(feeAddress, fee),
+      lockingScript: new TokenTransfer().lock(PROD_ADDRESS, fee),
       satoshis: 1
     })
   
@@ -140,7 +136,7 @@ export class MneePeerPayClient extends MessageBoxClient {
     await tx.sign()
   
     const base64Tx = Utils.toBase64(tx.toBinary())
-    const response = await fetch(`${mneeApi}/v1/transfer?auth_token=${mneeApiToken}`, {
+    const response = await fetch(`${MNEE_PROXY_API_URL}/v1/transfer?auth_token=${PUBLIC_PROD_MNEE_API_TOKEN}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rawtx: base64Tx }),
@@ -282,7 +278,7 @@ export class MneePeerPayClient extends MessageBoxClient {
         Logger.log('[MB CLIENT] Received Live Payment:', message);
         const incomingPayment: IncomingPayment = {
           messageId: message.messageId,
-          token: JSON.parse(message.body)
+          token: JSON.parse(message.body as string)
         }
         Logger.log('[PP CLIENT] Converted PeerMessage to IncomingPayment:', incomingPayment)
         onPayment(incomingPayment)

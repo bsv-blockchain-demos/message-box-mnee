@@ -4,13 +4,13 @@ import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import IdentitySelector from '../components/IdentitySelector'
 import { Button, Typography, Stack, CircularProgress } from '@mui/material'
-import { Identity } from '@bsv/identity-react'
+import { IdentityProps } from '@bsv/identity-react'
 
 export default function P2Identity () {
     const [loading, setLoading] = useState(false)
     const [amount, setAmount] = useState<number>(0)
     const { wallet, tokens, balance, getBalance, mneePeerPayClient } = useWallet()
-    const [selectedIdentity, setSelectedIdentity] = useState<Identity | null>(null)
+    const [selectedIdentity, setSelectedIdentity] = useState<IdentityProps | null>(null)
 
     const getInboundPayments = useCallback(async () => {
       try {
@@ -46,7 +46,7 @@ export default function P2Identity () {
           return
         }
         console.log('Pay', selectedIdentity?.identityKey, amount) 
-        const paid = await mneePeerPayClient.sendPayment(tokens, selectedIdentity!.identityKey, units)
+        const paid = await mneePeerPayClient.sendPayment(tokens, selectedIdentity?.identityKey!, units)
         if (paid.status === 'success') {
           console.log({ paid })
           toast.success('Payment sent successfully')

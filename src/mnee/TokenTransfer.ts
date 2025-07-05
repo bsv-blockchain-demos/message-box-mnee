@@ -13,9 +13,7 @@ import {
     WalletInterface,
     WalletProtocol,
   } from "@bsv/sdk";
-
-const prodApprover = import.meta.env.VITE_APPROVER
-const prodTokenId = import.meta.env.VITE_TOKEN_ID
+import { PROD_APPROVER, PROD_TOKEN_ID } from "./constants";
 
 export type MNEETokenInstructions = {
     protocolID: WalletProtocol
@@ -39,8 +37,8 @@ export type MNEETokenInstructions = {
     lock(
       address: string | number[],
       units: number,
-      approverPubKey: PublicKey = PublicKey.fromString(prodApprover),
-      assetId: string = prodTokenId
+      approverPubKey: PublicKey = PublicKey.fromString(PROD_APPROVER),
+      assetId: string = PROD_TOKEN_ID
     ): LockingScript {
       let pkhash: number[] = [];
       if (typeof address === "string") {

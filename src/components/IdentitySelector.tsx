@@ -1,12 +1,12 @@
 import { Stack, Typography, IconButton, Link } from '@mui/material'
-import { IdentityCard, Identity } from '@bsv/identity-react'
+import { IdentityCard, IdentityProps } from '@bsv/identity-react'
 import { useTheme } from '@mui/material/styles'
 import { Clear } from '@mui/icons-material'
 import CustomIdentitySearchField from './CustomIdentitySearchField'
 
 interface IdentitySelectorProps {
-  readonly selectedIdentity: Identity | null;
-  readonly setSelectedIdentity: (identity: Identity | null) => void;
+  readonly selectedIdentity: IdentityProps | null;
+  readonly setSelectedIdentity: (identity: IdentityProps | null) => void;
 }
 
 function IdentitySelector({ selectedIdentity, setSelectedIdentity }: IdentitySelectorProps) {

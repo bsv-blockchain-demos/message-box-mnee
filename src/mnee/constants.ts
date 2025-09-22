@@ -1,3 +1,8 @@
+// API key now comes from environment variable
+export const MNEE_API_KEY = import.meta.env.VITE_MNEE_API_KEY;
+export const MNEE_ENVIRONMENT = 'production';
+
+// Legacy tokens for backward compatibility
 export const PUBLIC_PROD_MNEE_API_TOKEN = '92982ec1c0975f31979da515d46bae9f';
 export const PUBLIC_SANDBOX_MNEE_API_TOKEN = '54f1fd1688ba66a58a67675b82feb93e';
 export const PROD_TOKEN_ID = 'ae59f3b898ec61acbdb6cc7a245fabeded0c094bf046f35206a3aec60ef88127_0';

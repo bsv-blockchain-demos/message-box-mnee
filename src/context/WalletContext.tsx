@@ -1,14 +1,14 @@
 import React, { useState, useContext, useMemo, useEffect, useCallback } from "react"
 import { WalletClient, ListOutputsResult, Beef, WalletOutput } from "@bsv/sdk"
-import Mnee from "mnee"
+import Mnee from "@mnee/ts-sdk"
 import { parseInscription } from "../pages/FundMetanet"
 import { MneePeerPayClient } from "../p2p/MneePeerPayClient"
-import { PROD_TOKEN_ID, PUBLIC_PROD_MNEE_API_TOKEN } from "../mnee/constants"
+import { PROD_TOKEN_ID, MNEE_API_KEY, MNEE_ENVIRONMENT } from "../mnee/constants"
 
 const wallet = new WalletClient()
 const mnee = new Mnee({
-    environment: 'production',
-    apiKey: PUBLIC_PROD_MNEE_API_TOKEN
+    environment: MNEE_ENVIRONMENT as 'production' | 'sandbox',
+    apiKey: MNEE_API_KEY
 })
 const mneePeerPayClient = new MneePeerPayClient({
     walletClient: wallet,

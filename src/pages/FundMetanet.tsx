@@ -4,9 +4,17 @@ import { useCallback, useState } from 'react'
 import { GetPublicKeyArgs, Utils, PublicKey, Transaction, OP, Script, Hash } from '@bsv/sdk'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
-import { MNEEUtxo, Inscription } from 'mnee'
+// Define local types since the new SDK may have different type definitions
+interface Inscription {
+  file: { hash: string; size: number; type: string; content?: number[] };
+  fields: Record<string, any>;
+  op?: string;
+  id?: string;
+  amt?: string;
+}
+
 import { MNEETokenInstructions } from '../mnee/TokenTransfer'
-import { MNEE_PROXY_API_URL, PROD_TOKEN_ID, PUBLIC_PROD_MNEE_API_TOKEN } from '../mnee/constants'
+import { MNEE_PROXY_API_URL } from '../mnee/constants'
 
 export const parseInscription = (script: Script) => {
     let fromPos: number | undefined;
@@ -64,43 +72,19 @@ export const parseInscription = (script: Script) => {
   };
 
 function FundMetanet() {
-    const { wallet } = useWallet()
+    const { wallet, mnee } = useWallet()
     const [loading, setLoading] = useState<boolean>(false)
     const [customInstructions, setCustomInstructions] = useState<MNEETokenInstructions | null>(null)
     const [address, setAddress] = useState<string>('')
 
-    const getUtxos = async (address: string) => {
-        try {
-            const response = await fetch(`${MNEE_PROXY_API_URL}/v1/utxos?auth_token=${PUBLIC_PROD_MNEE_API_TOKEN}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify([address]),
-          });
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-          const data: MNEEUtxo[] = await response.json()
-          console.log({ data })
-          return data
-        } catch (error) {
-            toast.error('Failed to fetch UTXOs')
-            return []
-        }
-    }
-
-    const parseUnitsFromRecentUtxos = async (recent: MNEEUtxo) => {
+    const parseUnitsFromRecentUtxos = async (recent: any) => {
         const beef = await (await fetch(`${MNEE_PROXY_API_URL}/v5/tx/${recent.txid}/beef`)).arrayBuffer()
         const bufferArray = new Uint8Array(beef)
         const atomicBEEF = Array.from(bufferArray)
         const tx = Transaction.fromAtomicBEEF(atomicBEEF)
         const valid = await tx.verify()
         if (!valid) toast.error('Invalid transaction was retrieved, did not pass SPV')
-        let units = 0
-        tx.outputs.forEach((output, vout) => {
-            if (vout !== recent.vout) return
-            const inscription = parseInscription(output.lockingScript)
-            if (PROD_TOKEN_ID !== inscription.id) return
-            if (inscription.op !== 'transfer') return
-            units += parseInt(inscription.amt)
-        })
+        const units = recent.data.bsv21.amt
         return { units, atomicBEEF }
     }
 
@@ -128,8 +112,16 @@ function FundMetanet() {
             setLoading(true)
             if (!await wallet.isAuthenticated()) return
             console.log('listening for funds', address)
-            const recent = await getUtxos(address)
-            await Promise.all(recent.map(async (r) => {
+            const utxos = await mnee.getAllUtxos(address)
+            console.log('All UTXOs:', utxos)
+            console.log('Total UTXOs found:', utxos.length)
+
+            // Calculate total balance
+            const totalBalance = utxos.reduce((sum, utxo) => sum + utxo.data.bsv21.amt, 0)
+            console.log('Total balance (atomic):', totalBalance)
+            console.log('Total balance (MNEE):', mnee.fromAtomicAmount(totalBalance))
+
+            await Promise.all(utxos.map(async (r) => {
               const { units, atomicBEEF } = await parseUnitsFromRecentUtxos(r)
               if (units === 0) throw new Error('No MNEE tokens found')
               if (!atomicBEEF) throw new Error('Failed to parse transaction')
@@ -148,14 +140,14 @@ function FundMetanet() {
                   }]
               })
               if (!accepted) toast.error('Metanet Desktop rejected a transaction')
-              else toast.success(`Funds received: ${units / 100000} MNEE`)
+              else toast.success(`Funds received: ${mnee.fromAtomicAmount(units)} MNEE`)
             }))
         } catch (error) {
-            console.error('Failed to listen for funds:', error)
+            console.error('Failed to listen for funds:', error instanceof Error ? error.message : error)
         } finally {
             setLoading(false)
         }
-    }, [wallet, address, customInstructions])
+    }, [wallet, mnee, address, customInstructions])
 
     return (
         <Stack direction="column" alignItems="center" justifyContent="space-between" spacing={3} sx={{ pb: 5 }}>

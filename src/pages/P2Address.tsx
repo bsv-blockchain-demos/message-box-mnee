@@ -62,17 +62,17 @@ function P2Address() {
       }
       const response: { tx: Transaction, error: string | false} = await cosignBroadcast(createTxRes.tx, mnee)
       if (response?.tx) {
-        toast.success(`Payment sent! TXID: ${response.tx.id('hex')}`)
         const spends = response.tx.inputs!.reduce((acc, input, index) => ({
           ...acc,
           [index]: {
             unlockingScript: input.unlockingScript!.toHex()
           }
-        }), {} as Record<number, SignActionSpend>)
+        }), {} as Record<string, SignActionSpend>)
         const signedResponse = await wallet.signAction({
           reference: createTxRes.reference,
           spends
         })
+        toast.success(`Payment sent! TXID: ${response.tx.id('hex')}`)
         console.log({ signedResponse })
         if (!signedResponse.txid) {
           toast.error('Metanet Desktop rejected the change output')

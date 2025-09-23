@@ -165,16 +165,18 @@ export const createTx = async (
       const tx = Transaction.fromBEEF(actionResult.signableTransaction.tx)
       
       const stopAfter = inputs.length - 1
-      tx.inputs.forEach((input, vin) => {
+        tx.inputs.forEach((input, vin) => {
         if (vin >= stopAfter) return
         const customInstructions = JSON.parse(tokens.outputs[vin].customInstructions || '{}') as MNEETokenInstructions
         input.unlockingScriptTemplate = new TokenTransfer().unlock(wallet, customInstructions, 'all', true)
       })
-
+      
       tx.inputs[stopAfter].unlockingScriptTemplate = new P2PKH().unlock(tempKey)
 
+      // remove extra inputs.
+      tx.inputs = tx.inputs.slice(0, stopAfter + 1)
+      
       await tx.sign()
-
       console.log({ signed: tx.toHex() })
 
       return { tx, reference: actionResult.signableTransaction.reference, error: false }

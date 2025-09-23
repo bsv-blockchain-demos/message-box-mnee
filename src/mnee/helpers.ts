@@ -8,13 +8,11 @@ import {
 } from "@bsv/sdk";
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
-import { MNEE_PROXY_API_URL } from './constants'
 import Mnee, { MNEEConfig } from "@mnee/ts-sdk"
 
-export const fetchBeef = async (txid: string): Promise<number[]> => {
-  const beef = await (await fetch(`${MNEE_PROXY_API_URL}/v5/tx/${txid}/beef`)).arrayBuffer()
-  const bufferArray = new Uint8Array(beef)
-  return Array.from(bufferArray)
+export const fetchBeef = async (txid: string): Promise<Transaction> => {
+  const beef = await (await fetch(`https://api.whatsonchain.com/v1/bsv/main/tx/${txid}/beef`)).text()
+  return Transaction.fromHexBEEF(beef)
 }
 
 export const createTx = async (
@@ -137,6 +135,13 @@ export const cosignBroadcast = async (tx: Transaction, mnee: Mnee): Promise<{ tx
 
     if (result.rawtx) {
       const returnedTx = Transaction.fromHex(result.rawtx)
+      await Promise.all(returnedTx.inputs.map(async (input, vin) => {
+        let sourceTransaction = tx.inputs[vin]?.sourceTransaction
+        if (!sourceTransaction) {
+          sourceTransaction = await fetchBeef(tx.inputs[vin]!.sourceTXID!)
+        }
+        input.sourceTransaction = sourceTransaction
+      }))
       return { tx: returnedTx, error: false }
     }
 

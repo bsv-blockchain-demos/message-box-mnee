@@ -62,12 +62,8 @@ function P2Address() {
       }
       const response: { tx: Transaction, error: string | false} = await cosignBroadcast(createTxRes.tx, mnee)
       if (response?.tx) {
-        const tx = createTxRes.tx
-        tx.inputs.map((input, vin) => {
-          input.unlockingScript = response.tx.inputs[vin].unlockingScript 
-        })
         const internalizeResponse = await wallet.internalizeAction({
-          tx: tx.toAtomicBEEF(),
+          tx: response.tx.toAtomicBEEF(),
           outputs: [{
             outputIndex: 1,
             protocol: 'basket insertion',

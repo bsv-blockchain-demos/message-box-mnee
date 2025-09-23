@@ -15,7 +15,7 @@ const mnee = new Mnee({
 const mneePeerPayClient = new MneePeerPayClient({
     walletClient: wallet,
     enableLogging: true
-})
+}, mnee)
 
 export type WalletContextValue = {
     wallet: WalletClient

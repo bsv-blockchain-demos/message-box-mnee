@@ -14,7 +14,6 @@ interface Inscription {
 }
 
 import { MNEETokenInstructions } from '../mnee/TokenTransfer'
-import { MNEE_PROXY_API_URL } from '../mnee/constants'
 
 export const parseInscription = (script: Script) => {
     let fromPos: number | undefined;

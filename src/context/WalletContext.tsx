@@ -4,12 +4,14 @@ import Mnee from "@mnee/ts-sdk"
 import { parseInscription } from "../pages/FundMetanet"
 import { MneePeerPayClient } from "../p2p/MneePeerPayClient"
 import { PROD_TOKEN_ID, MNEE_API_KEY, MNEE_ENVIRONMENT } from "../mnee/constants"
+import { MNEEConfig } from "@mnee/ts-sdk"
 
 const wallet = new WalletClient()
 const mnee = new Mnee({
     environment: MNEE_ENVIRONMENT as 'production' | 'sandbox',
     apiKey: MNEE_API_KEY
 })
+
 const mneePeerPayClient = new MneePeerPayClient({
     walletClient: wallet,
     enableLogging: true
@@ -25,6 +27,7 @@ export type WalletContextValue = {
     displayTokens: any[]
     setDisplayTokens: (tokens: any[]) => void
     mneePeerPayClient: MneePeerPayClient
+    config: MNEEConfig
 }
 
 const WalletContext = React.createContext<WalletContextValue>({
@@ -36,7 +39,8 @@ const WalletContext = React.createContext<WalletContextValue>({
     tokens: {} as ListOutputsResult,
     setTokens: () => {},
     setDisplayTokens: () => {},
-    displayTokens: []
+    displayTokens: [],
+    config: {} as MNEEConfig
 })
 
 export function useWallet() {
@@ -56,9 +60,12 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     const [balance, setBalance] = useState<number>(0)
     const [tokens, setTokens] = useState<ListOutputsResult>({} as ListOutputsResult)
     const [displayTokens, setDisplayTokens] = useState<any[]>([])
+    const [config, setConfig] = useState<MNEEConfig>({} as MNEEConfig)
 
     const getBalance = useCallback(async () => {
         try {
+            const config = await mnee.config()
+            setConfig(config)
             const ts = await wallet.listOutputs({
                 basket: 'MNEE tokens',
                 include: 'entire transactions',
@@ -107,8 +114,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         setTokens,
         displayTokens,
         setDisplayTokens,
-        getBalance
-    }), [balance, tokens, displayTokens])
+        getBalance,
+        config
+    }), [balance, tokens, displayTokens, config])
 
     return (
         <WalletContext.Provider value={walletContextValue}>

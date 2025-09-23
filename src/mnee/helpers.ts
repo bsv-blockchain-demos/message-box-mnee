@@ -3,18 +3,13 @@ import {
   Beef,
   WalletInterface,
   ListOutputsResult,
-  CreateActionArgs,
-  CreateActionResult,
-  CreateActionInput,
-  CreateActionOutput,
-  PrivateKey,
-  P2PKH,
-  AtomicBEEF
+  TransactionInput,
+  TransactionOutput,
 } from "@bsv/sdk";
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
-import { PROD_ADDRESS, MNEE_PROXY_API_URL } from './constants'
-import Mnee from "@mnee/ts-sdk"
+import { MNEE_PROXY_API_URL } from './constants'
+import Mnee, { MNEEConfig } from "@mnee/ts-sdk"
 
 export const fetchBeef = async (txid: string): Promise<number[]> => {
   const beef = await (await fetch(`${MNEE_PROXY_API_URL}/v5/tx/${txid}/beef`)).arrayBuffer()
@@ -29,32 +24,31 @@ export const createTx = async (
   address: string,
   units: number,
   changeAddress: string,
-  changeInstructions: MNEETokenInstructions
-): Promise<{ tx: Transaction, reference: string, error: string | false }> => {
+  config: MNEEConfig
+): Promise<{ tx: Transaction, error: string | false }> => {
   try {
     let unitsIn = 0
 
     // do we have any MNEE?
     if (tokens.outputs.length === 0) {
-      return { tx: new Transaction(), reference: '', error: 'No MNEE tokens to spend' }
+      return { tx: new Transaction(), error: 'No MNEE tokens to spend' }
     }
 
     // Get proper fee calculation from MNEE config
-    const config = await mnee.config()
     const transferAtomic = units
     const feeTier = config.fees.find(tier =>
       transferAtomic >= tier.min && transferAtomic <= tier.max
     )
 
     if (!feeTier) {
-      return { tx: new Transaction(), reference: '', error: 'No fee tier found for transfer amount' }
+      return { tx: new Transaction(), error: 'No fee tier found for transfer amount' }
     }
 
     const fee = feeTier.fee
     console.log(`Transfer fee: ${mnee.fromAtomicAmount(fee)} MNEE`)
 
     // Prepare inputs - define existing MNEE token UTXOs
-    const inputs: CreateActionInput[] = []
+    const inputs: TransactionInput[] = []
     const beef = Beef.fromBinary(tokens.BEEF as number[])
 
     for (const token of tokens.outputs) {
@@ -64,7 +58,7 @@ export const createTx = async (
       const sourceTransaction = beef.findAtomicTransaction(txid)
       if (!sourceTransaction) {
         console.error('Failed to find source transaction')
-        return { tx: new Transaction(), reference: '', error: 'Failed to find source transaction' }
+        return { tx: new Transaction(), error: 'Failed to find source transaction' }
       }
 
       // Get the MNEE amount from inscription
@@ -76,119 +70,53 @@ export const createTx = async (
       console.log({ token, inscription, tokenAmount })
 
       // Define existing input with proper structure for createAction
+      const customInstructions = JSON.parse(token.customInstructions || '{}') as MNEETokenInstructions
       inputs.push({
-        outpoint: token.outpoint,
-        inputDescription: `MNEE token input: ${tokenAmount} units`,
-        unlockingScriptLength: 182 // Estimate from TokenTransfer template
+        sourceTransaction,
+        sourceOutputIndex: parseInt(token.outpoint.split('.')[1]),
+        unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions, 'all', true)
       })
     }
 
     console.log({ unitsIn, units, fee })
     if (unitsIn < units + fee) {
-      return { tx: new Transaction(), reference: '', error: 'Insufficient MNEE tokens to spend' }
+      return { tx: new Transaction(), error: 'Insufficient MNEE tokens to spend' }
     }
 
     const remainder = unitsIn - units - fee
-
-    const tempKey = new PrivateKey(21)
-
-    const funding = await wallet.createAction({
-      description: 'fund a transfer',
-      outputs:[
-        {
-          outputDescription: 'Funding transfer',
-          lockingScript: new P2PKH().lock(tempKey.toAddress()).toHex(),
-          satoshis: 3
-        }
-      ],
-      options: {
-        randomizeOutputs: false,
-      }
-    })
-
-    const fundingTx = Transaction.fromBEEF(funding!.tx as AtomicBEEF)
-
-    inputs.push({
-      outpoint: fundingTx.id('hex') + '.0',
-      inputDescription: `Funding input`,
-      unlockingScriptLength: 108 // P2PKH
-    })
    
     // Prepare outputs
-    const outputs: CreateActionOutput[] = [
+    const outputs: TransactionOutput[] = [
       {
-        outputDescription: 'Paying MNEE to recipient address',
-        lockingScript: new TokenTransfer().lock(address, units).toHex(),
+        // outputDescription: 'Paying MNEE to recipient address',
+        lockingScript: new TokenTransfer().lock(address, units),
         satoshis: 1
       },
       {
-        outputDescription: 'MNEE change output',
+        // outputDescription: 'MNEE change output',
         satoshis: 1,
-        lockingScript: new TokenTransfer().lock(changeAddress, remainder).toHex(),
-        basket: 'MNEE tokens',
-        customInstructions: JSON.stringify(changeInstructions),
-        tags: ['MNEE', 'change']
+        lockingScript: new TokenTransfer().lock(changeAddress, remainder),
+        // basket: 'MNEE tokens',
+        // customInstructions: JSON.stringify(changeInstructions),
+        // tags: ['MNEE', 'change']
       },
       {
-        outputDescription: 'MNEE fee paid to service provider',
-        lockingScript: new TokenTransfer().lock(PROD_ADDRESS, fee).toHex(),
+        // outputDescription: 'MNEE fee paid to service provider',
+        lockingScript: new TokenTransfer().lock(config.feeAddress, fee),
         satoshis: 1
       }
     ]
 
-    console.log({ fundingTx: fundingTx.toHex() })
-
-    const allBEEF = new Beef()
-    allBEEF.mergeBeef(fundingTx.toBEEF() as number[])
-    allBEEF.mergeBeef(tokens.BEEF as number[])
-    const inputBEEF = allBEEF.toBinary()
-
-    // Create action with proper input/output definitions and noSend option
-    const createActionArgs: CreateActionArgs = {
-      description: 'Send MNEE tokens',
-      inputs,
-      outputs,
-      inputBEEF,
-      options: {
-        noSend: true, // Important: don't broadcast yet, needs cosigning
-        randomizeOutputs: false,
-      }
-    }
-
-    const actionResult: CreateActionResult = await wallet.createAction(createActionArgs)
-
-    // Check if we got a signable transaction (expected with noSend: true)
-    if (actionResult.signableTransaction) {
-      // With noSend: true, we get a signableTransaction with atomic BEEF
-      // The transaction needs to be signed later using signAction
-      // For now, we need to extract the transaction from the BEEF
-      const tx = Transaction.fromBEEF(actionResult.signableTransaction.tx)
+    const tx = new Transaction(1, inputs, outputs)
       
-      const stopAfter = inputs.length - 1
-        tx.inputs.forEach((input, vin) => {
-        if (vin >= stopAfter) return
-        const customInstructions = JSON.parse(tokens.outputs[vin].customInstructions || '{}') as MNEETokenInstructions
-        input.unlockingScriptTemplate = new TokenTransfer().unlock(wallet, customInstructions, 'all', true)
-      })
-      
-      tx.inputs[stopAfter].unlockingScriptTemplate = new P2PKH().unlock(tempKey)
+    await tx.sign()
+    console.log({ signed: tx.toHex() })
 
-      // remove extra inputs.
-      tx.inputs = tx.inputs.slice(0, stopAfter + 1)
-      
-      await tx.sign()
-      console.log({ signed: tx.toHex() })
-
-      return { tx, reference: actionResult.signableTransaction.reference, error: false }
-
-    }
-
-    return { tx: new Transaction(), reference: '', error: 'Failed to create transaction from wallet action' }
+    return { tx, error: false }
   } catch (error) {
     console.error('Error in createTx:', error)
     return {
       tx: new Transaction(),
-      reference: '',
       error: error instanceof Error ? error.message : 'Unknown error occurred'
     }
   }
@@ -198,8 +126,8 @@ export const cosignBroadcast = async (tx: Transaction, mnee: Mnee): Promise<{ tx
   try {
     console.log({ tx: tx.toHex() })
     const rawTxHex = tx.toHex()
-    const result = await mnee.submitRawTx(rawTxHex)
-    console.log('Ticket ID:', result.ticketId)
+    const result = await mnee.submitRawTx(rawTxHex, { broadcast: true })
+    console.log('result', result)
 
     // Check transaction status if we have a ticket ID
     if (result.ticketId) {

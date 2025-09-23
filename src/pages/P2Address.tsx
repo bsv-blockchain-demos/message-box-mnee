@@ -5,13 +5,13 @@ import { toast } from 'react-toastify'
 import AmountSelector from '../components/AmountSelector'
 import { cosignBroadcast, createTx } from '../mnee/helpers'
 import { MNEETokenInstructions } from '../mnee/TokenTransfer'
-import { GetPublicKeyArgs, PublicKey, SignActionSpend, Transaction } from '@bsv/sdk'
+import { GetPublicKeyArgs, PublicKey, Transaction, Utils } from '@bsv/sdk'
 
 function P2Address() {
   const [loading, setLoading] = useState<boolean>(false)
   const [address, setAddress] = useState('')
   const [amount, setAmount] = useState<number>(0)
-  const { wallet, mnee, tokens, getBalance } = useWallet()
+  const { wallet, mnee, tokens, getBalance, config } = useWallet()
 
   const handleAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(event.target.value)
@@ -22,7 +22,7 @@ function P2Address() {
         console.log('creating change address')
         const instructions = {
             protocolID: [2, 'Pay MNEE'],
-            keyID: 'change' + new Date().toISOString().slice(0, 10),
+            keyID: Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,10), 'utf8')),
             counterparty: 'self'
         } as GetPublicKeyArgs
         const { publicKey } = await wallet.getPublicKey(instructions)
@@ -53,7 +53,7 @@ function P2Address() {
         return
       }
 
-      const createTxRes = await createTx(wallet, mnee, tokens, address, Math.floor(amount * 100000), change, instructions)
+      const createTxRes = await createTx(wallet, mnee, tokens, address, Math.floor(amount * 100000), change, config)
       if (createTxRes.error) {
         const e = createTxRes.error || 'Failed to create transaction'
         console.error(e)
@@ -62,22 +62,27 @@ function P2Address() {
       }
       const response: { tx: Transaction, error: string | false} = await cosignBroadcast(createTxRes.tx, mnee)
       if (response?.tx) {
-        const spends = response.tx.inputs!.reduce((acc, input, index) => ({
-          ...acc,
-          [index]: {
-            unlockingScript: input.unlockingScript!.toHex()
-          }
-        }), {} as Record<string, SignActionSpend>)
-        const signedResponse = await wallet.signAction({
-          reference: createTxRes.reference,
-          spends
+        const tx = createTxRes.tx
+        tx.inputs.map((input, vin) => {
+          input.unlockingScript = response.tx.inputs[vin].unlockingScript 
         })
-        toast.success(`Payment sent! TXID: ${response.tx.id('hex')}`)
-        console.log({ signedResponse })
-        if (!signedResponse.txid) {
-          toast.error('Metanet Desktop rejected the change output')
+        const internalizeResponse = await wallet.internalizeAction({
+          tx: tx.toAtomicBEEF(),
+          outputs: [{
+            outputIndex: 1,
+            protocol: 'basket insertion',
+            insertionRemittance: {
+              basket: 'MNEE tokens',
+              customInstructions: JSON.stringify(instructions),
+              tags: ['MNEE', 'change']
+            }
+          }],
+          description: 'Paying MNEE to recipient address'
+        })
+        if (!internalizeResponse.accepted) {
+          toast.error('Wallet rejected the change output')
         } else {
-          toast.success(`Funds received: ${amount} MNEE`)
+          toast.success(`Payment sent! TXID: ${response.tx.id('hex')}`)
           setAddress('')
           setAmount(0)
         }

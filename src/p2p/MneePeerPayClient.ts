@@ -4,6 +4,8 @@ import { Logger } from './Logger.js'
 import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'
 import { MNEE_PROXY_API_URL, PROD_ADDRESS, PUBLIC_PROD_MNEE_API_TOKEN } from '../mnee/constants'
+import { cosignBroadcast } from '../mnee/helpers.js'
+import Mnee from '@mnee/ts-sdk'
 
 export const MNEE_PAYMENT_MESSAGEBOX = 'mnee_payment_inbox'
 
@@ -40,14 +42,16 @@ export interface IncomingPayment {
  */
 export class MneePeerPayClient extends MessageBoxClient {
   private readonly peerPayWalletClient: WalletClient
+  private readonly mnee: Mnee
 
-  constructor(config: PeerPayClientConfig) {
+  constructor(config: PeerPayClientConfig, mnee: Mnee) {
     const { messageBoxHost = 'https://message-box-us-1.bsvb.tech', walletClient, enableLogging = false } = config
 
     // 🔹 Pass enableLogging to MessageBoxClient
     super({ host: messageBoxHost, walletClient, enableLogging })
 
     this.peerPayWalletClient = walletClient
+    this.mnee = mnee
   }
 
   static async fetchBeef(txid: string): Promise<number[]> {
@@ -135,16 +139,9 @@ export class MneePeerPayClient extends MessageBoxClient {
     // get signatures from Metanet Desktop
     await tx.sign()
   
-    const base64Tx = Utils.toBase64(tx.toBinary())
-    const response = await fetch(`${MNEE_PROXY_API_URL}/v1/transfer?auth_token=${PUBLIC_PROD_MNEE_API_TOKEN}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rawtx: base64Tx }),
-    })
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-    const { rawtx: responseRawtx } = await response.json()
-    if (!responseRawtx) throw new Error('Failed to broadcast transaction')
-    return { tokensOnlyTx: tx, tx: Transaction.fromBinary(Utils.toArray(responseRawtx, 'base64')), keyID }
+    const responseFromMnee = await cosignBroadcast(tx, this.mnee)
+    if (!responseFromMnee?.tx) throw new Error('Failed to broadcast transaction')
+    return { tokensOnlyTx: tx, tx: responseFromMnee.tx, keyID }
   }
 
   /**

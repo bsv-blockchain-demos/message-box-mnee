@@ -6,7 +6,10 @@ import {
   CreateActionArgs,
   CreateActionResult,
   CreateActionInput,
-  CreateActionOutput
+  CreateActionOutput,
+  PrivateKey,
+  P2PKH,
+  AtomicBEEF
 } from "@bsv/sdk";
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
@@ -54,8 +57,6 @@ export const createTx = async (
     const inputs: CreateActionInput[] = []
     const beef = Beef.fromBinary(tokens.BEEF as number[])
 
-    const tx = new Transaction()
-
     for (const token of tokens.outputs) {
       if (unitsIn >= units + fee) break
 
@@ -89,6 +90,30 @@ export const createTx = async (
 
     const remainder = unitsIn - units - fee
 
+    const tempKey = new PrivateKey(21)
+
+    const funding = await wallet.createAction({
+      description: 'fund a transfer',
+      outputs:[
+        {
+          outputDescription: 'Funding transfer',
+          lockingScript: new P2PKH().lock(tempKey.toAddress()).toHex(),
+          satoshis: 3
+        }
+      ],
+      options: {
+        randomizeOutputs: false,
+      }
+    })
+
+    const fundingTx = Transaction.fromBEEF(funding!.tx as AtomicBEEF)
+
+    inputs.push({
+      outpoint: fundingTx.id('hex') + '.0',
+      inputDescription: `Funding input`,
+      unlockingScriptLength: 108 // P2PKH
+    })
+   
     // Prepare outputs
     const outputs: CreateActionOutput[] = [
       {
@@ -111,15 +136,22 @@ export const createTx = async (
       }
     ]
 
+    console.log({ fundingTx: fundingTx.toHex() })
+
+    const allBEEF = new Beef()
+    allBEEF.mergeBeef(fundingTx.toBEEF() as number[])
+    allBEEF.mergeBeef(tokens.BEEF as number[])
+    const inputBEEF = allBEEF.toBinary()
+
     // Create action with proper input/output definitions and noSend option
     const createActionArgs: CreateActionArgs = {
       description: 'Send MNEE tokens',
       inputs,
       outputs,
-      inputBEEF: tokens.BEEF,
+      inputBEEF,
       options: {
         noSend: true, // Important: don't broadcast yet, needs cosigning
-        randomizeOutputs: false
+        randomizeOutputs: false,
       }
     }
 
@@ -132,16 +164,18 @@ export const createTx = async (
       // For now, we need to extract the transaction from the BEEF
       const tx = Transaction.fromBEEF(actionResult.signableTransaction.tx)
       
-      const stopAfter = inputs.length
+      const stopAfter = inputs.length - 1
       tx.inputs.forEach((input, vin) => {
         if (vin >= stopAfter) return
         const customInstructions = JSON.parse(tokens.outputs[vin].customInstructions || '{}') as MNEETokenInstructions
         input.unlockingScriptTemplate = new TokenTransfer().unlock(wallet, customInstructions, 'all', true)
       })
 
+      tx.inputs[stopAfter].unlockingScriptTemplate = new P2PKH().unlock(tempKey)
+
       await tx.sign()
 
-      console.log({ tx: tx.toHex() })
+      console.log({ signed: tx.toHex() })
 
       return { tx, reference: actionResult.signableTransaction.reference, error: false }
 

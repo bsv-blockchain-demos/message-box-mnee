@@ -76,16 +76,16 @@ function FundMetanet() {
     const [loading, setLoading] = useState<boolean>(false)
     const [customInstructions, setCustomInstructions] = useState<MNEETokenInstructions | null>(null)
     const [address, setAddress] = useState<string>('')
+    const [balance, setBalance] = useState<number>(0)
 
     const parseUnitsFromRecentUtxos = async (recent: any) => {
-        const beef = await (await fetch(`${MNEE_PROXY_API_URL}/v5/tx/${recent.txid}/beef`)).arrayBuffer()
-        const bufferArray = new Uint8Array(beef)
-        const atomicBEEF = Array.from(bufferArray)
-        const tx = Transaction.fromAtomicBEEF(atomicBEEF)
-        const valid = await tx.verify()
-        if (!valid) toast.error('Invalid transaction was retrieved, did not pass SPV')
+        const raw = await (await fetch(`https://api.whatsonchain.com/v1/bsv/main/tx/${recent.txid}/beef`)).text()
+        const beef = Utils.toArray(raw, 'hex')
+        const tx = Transaction.fromBEEF(beef)
+        // const valid = await tx.verify()
+        // if (!valid) toast.error('Invalid transaction was retrieved, did not pass SPV')
         const units = recent.data.bsv21.amt
-        return { units, atomicBEEF }
+        return { units, atomicBEEF: tx.toAtomicBEEF() }
     }
 
     const getFundingAddress = useCallback(async () => {
@@ -94,7 +94,7 @@ function FundMetanet() {
             console.log('attempting to fund wallet')
             const instructions = {
                 protocolID: [2, 'Pay MNEE'],
-                keyID: Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,16), 'utf8')), // not random, just in case some failure prevents the saving of this data.
+                keyID: Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,10), 'utf8')), // not random, just in case some failure prevents the saving of this data.
                 counterparty: 'self'
             } as GetPublicKeyArgs
             setCustomInstructions(instructions as MNEETokenInstructions)
@@ -102,6 +102,8 @@ function FundMetanet() {
             const a = PublicKey.fromString(publicKey).toAddress()
             setAddress(a)
             console.log({ a })
+            const balance = await mnee.balance(a)
+            setBalance((balance?.decimalAmount || 0))
         } catch (error) {
             console.error('Failed to get funding address:', error)
         }
@@ -160,6 +162,7 @@ function FundMetanet() {
                 <Typography variant="subtitle1">Send MNEE to your Metanet Wallet</Typography>
                 <QRCodeCanvas value={address} size={160} />
                 <Typography variant="body1">{address}</Typography>
+                <Typography variant="caption" color="text.secondary">Balance {balance.toLocaleString(['en-US'], { style: 'currency', currency: 'USD' })}</Typography>
                 <Typography variant="overline">Only Send MNEE</Typography>
                 <Button variant='contained' disabled={loading} onClick={listenForFundsAndInteralize}>Check For Incoming Funds</Button>
             </>}

@@ -19,6 +19,7 @@ export type MNEETokenInstructions = {
     protocolID: WalletProtocol
     keyID: string
     counterparty: string
+    forSelf: boolean
 }
   
   /**
@@ -150,6 +151,8 @@ export type MNEETokenInstructions = {
               "The lockingScript or input sourceTransaction is required for transaction signing."
             );
           }
+
+          console.log({ lockingScript: lockingScript.toASM() })
   
           const preimage = TransactionSignature.format({
             sourceTXID,
@@ -166,21 +169,22 @@ export type MNEETokenInstructions = {
           });
 
           console.log({ customInstructions })
+          const hashToDirectlySign = Hash.sha256(Hash.sha256(preimage))
+          console.log({ hashToDirectlySign })
 
           // include the pattern from BRC-29
           const { signature } = await wallet.createSignature({
-            hashToDirectlySign: Hash.sha256(Hash.sha256(preimage)),
+            hashToDirectlySign,
             protocolID: customInstructions.protocolID,
             keyID: customInstructions.keyID,
             counterparty: customInstructions?.counterparty || 'self'
           })
 
-          console.log({ signature })
-
           const { publicKey } = await wallet.getPublicKey({
             protocolID: customInstructions.protocolID,
             keyID: customInstructions.keyID,
-            counterparty: customInstructions?.counterparty || 'self'
+            counterparty: customInstructions?.counterparty || 'self',
+            forSelf: true
           })
 
           console.log({ hash: PublicKey.fromString(publicKey).toHash('hex') })
@@ -191,8 +195,10 @@ export type MNEETokenInstructions = {
             rawSignature.s,
             signatureScope
           );
+          const txSig = sig.toChecksigFormat()
+          console.log({ txSig: Utils.toHex(txSig) })
           const unlockScript = new UnlockingScript();
-          unlockScript.writeBin(sig.toChecksigFormat());
+          unlockScript.writeBin(txSig);
           unlockScript.writeBin(
             PublicKey.fromString(publicKey).encode(true) as number[]
           );

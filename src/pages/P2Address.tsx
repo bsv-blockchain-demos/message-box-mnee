@@ -23,7 +23,8 @@ function P2Address() {
         const instructions = {
             protocolID: [2, 'Pay MNEE'],
             keyID: Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,10), 'utf8')),
-            counterparty: 'self'
+            counterparty: 'self',
+            forSelf: true
         } as GetPublicKeyArgs
         const { publicKey } = await wallet.getPublicKey(instructions)
         return { instructions: instructions as MNEETokenInstructions, change: PublicKey.fromString(publicKey).toAddress() }
@@ -62,6 +63,13 @@ function P2Address() {
       }
       const response: { tx: Transaction, error: string | false} = await cosignBroadcast(createTxRes.tx, mnee)
       if (response?.tx) {
+
+        const valid = await mnee.validateMneeTx(response.tx.toHex())
+        if (!valid) {
+          toast.error('Invalid transaction was retrieved, did not pass SPV')
+          return
+        }
+
         const internalizeResponse = await wallet.internalizeAction({
           tx: response.tx.toAtomicBEEF(),
           outputs: [{

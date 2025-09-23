@@ -60,7 +60,8 @@ export const createTx = async (
       }
 
       // Get the MNEE amount from inscription
-      const output = sourceTransaction.outputs[parseInt(vout)]
+      const sourceOutputIndex = parseInt(vout)
+      const output = sourceTransaction.outputs[sourceOutputIndex]
       const inscription = parseInscription(output.lockingScript)
       const tokenAmount = parseInt(inscription?.amt || '0')
       unitsIn += tokenAmount
@@ -71,7 +72,7 @@ export const createTx = async (
       const customInstructions = JSON.parse(token.customInstructions || '{}') as MNEETokenInstructions
       inputs.push({
         sourceTransaction,
-        sourceOutputIndex: parseInt(token.outpoint.split('.')[1]),
+        sourceOutputIndex,
         unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions, 'all', true)
       })
     }
@@ -130,21 +131,20 @@ export const cosignBroadcast = async (tx: Transaction, mnee: Mnee): Promise<{ tx
     // Check transaction status if we have a ticket ID
     if (result.ticketId) {
       const status = await mnee.getTxStatus(result.ticketId)
-      console.log('Transaction ID:', status.tx_id || 'Unknown')
+      console.log({ status })
+      if (status.tx_hex) {
+        const returnedTx = Transaction.fromHex(status.tx_hex)
+        await Promise.all(returnedTx.inputs.map(async (input, vin) => {
+          let sourceTransaction = tx.inputs?.[vin]?.sourceTransaction
+          if (!sourceTransaction) {
+            console.log('retrieving source tx:', tx.inputs[vin]!.sourceTXID)
+            sourceTransaction = await fetchBeef(tx.inputs[vin]!.sourceTXID!)
+          }
+          input.sourceTransaction = sourceTransaction
+        }))
+        return { tx: returnedTx, error: false }
+      }
     }
-
-    if (result.rawtx) {
-      const returnedTx = Transaction.fromHex(result.rawtx)
-      await Promise.all(returnedTx.inputs.map(async (input, vin) => {
-        let sourceTransaction = tx.inputs[vin]?.sourceTransaction
-        if (!sourceTransaction) {
-          sourceTransaction = await fetchBeef(tx.inputs[vin]!.sourceTXID!)
-        }
-        input.sourceTransaction = sourceTransaction
-      }))
-      return { tx: returnedTx, error: false }
-    }
-
     return { tx: new Transaction(), error: 'Failed to broadcast transaction' }
   } catch (error) {
     console.error('Failed to submit transaction:', error)

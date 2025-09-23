@@ -94,7 +94,8 @@ function FundMetanet() {
             const instructions = {
                 protocolID: [2, 'Pay MNEE'],
                 keyID: Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,10), 'utf8')), // not random, just in case some failure prevents the saving of this data.
-                counterparty: 'self'
+                counterparty: 'self',
+                forSelf: true
             } as GetPublicKeyArgs
             setCustomInstructions(instructions as MNEETokenInstructions)
             const { publicKey } = await wallet.getPublicKey(instructions)

@@ -12,6 +12,7 @@ import {
     Utils,
     WalletInterface,
     WalletProtocol,
+    PrivateKey,
   } from "@bsv/sdk";
 import { PROD_APPROVER, PROD_TOKEN_ID } from "./constants";
 
@@ -101,7 +102,8 @@ export type MNEETokenInstructions = {
       signOutputs: "all" | "none" | "single" = "all",
       anyoneCanPay = false,
       sourceSatoshis?: number,
-      lockingScript?: Script
+      lockingScript?: Script,
+      approver?: PrivateKey
     ): {
       sign: (tx: Transaction, inputIndex: number) => Promise<UnlockingScript>;
       estimateLength: () => Promise<182>;
@@ -167,10 +169,24 @@ export type MNEETokenInstructions = {
             lockTime: tx.lockTime,
             scope: signatureScope,
           });
+          
+          const unlockScript = new UnlockingScript();
 
           console.log({ customInstructions, preimage: Utils.toHex(preimage) })
           const hashToDirectlySign = Hash.sha256(Hash.sha256(preimage))
           console.log({ hashToDirectlySign })
+
+          if (approver) {
+            const rawSignature = approver.sign(Hash.sha256(preimage))
+            const sig = new TransactionSignature(
+              rawSignature.r,
+              rawSignature.s,
+              signatureScope
+            )
+            const sigForScript = sig.toChecksigFormat()
+            unlockScript.writeBin(sigForScript)
+          }  
+          
 
           // include the pattern from BRC-29
           const { signature } = await wallet.createSignature({
@@ -197,7 +213,6 @@ export type MNEETokenInstructions = {
           );
           const txSig = sig.toChecksigFormat()
           console.log({ txSig: Utils.toHex(txSig) })
-          const unlockScript = new UnlockingScript();
           unlockScript.writeBin(txSig);
           unlockScript.writeBin(
             PublicKey.fromString(publicKey).encode(true) as number[]

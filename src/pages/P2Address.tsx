@@ -4,8 +4,8 @@ import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 import AmountSelector from '../components/AmountSelector'
 import { cosignBroadcast, createTx } from '../mnee/helpers'
-import { MNEETokenInstructions } from '../mnee/TokenTransfer'
-import { GetPublicKeyArgs, PublicKey, Transaction, Utils } from '@bsv/sdk'
+import { getMNEEAddress } from '../mnee/getAddress'
+import { Transaction } from '@bsv/sdk'
 
 function P2Address() {
   const [loading, setLoading] = useState<boolean>(false)
@@ -15,23 +15,6 @@ function P2Address() {
 
   const handleAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(event.target.value)
-  }
-
-  const getChangeAddress = async () : Promise<{ instructions: MNEETokenInstructions, change: string }> => {
-    try {
-        console.log('creating change address')
-        const instructions = {
-            protocolID: [2, 'Pay MNEE'],
-            keyID: Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,10), 'utf8')),
-            counterparty: 'self',
-            forSelf: true
-        } as GetPublicKeyArgs
-        const { publicKey } = await wallet.getPublicKey(instructions)
-        return { instructions: instructions as MNEETokenInstructions, change: PublicKey.fromString(publicKey).toAddress() }
-    } catch (error) {
-        console.error('Failed to get change address:', error)
-        return { instructions: {} as MNEETokenInstructions, change: '' }
-    }
   }
 
   const handlePayment = async () => {
@@ -48,7 +31,7 @@ function P2Address() {
       }
       await wallet.isAuthenticated()
 
-      const { instructions, change } = await getChangeAddress()
+      const { instructions, change } = await getMNEEAddress(wallet)
       if (!instructions || !change) {
         toast.error('Failed to get change address')
         return
@@ -63,7 +46,7 @@ function P2Address() {
       }
       const response: { tx: Transaction, error: string | false} = await cosignBroadcast(createTxRes.tx, mnee)
       if (response?.tx) {
-
+        
         const valid = await mnee.validateMneeTx(response.tx.toHex())
         if (!valid) {
           toast.error('Invalid transaction was retrieved, did not pass SPV')

@@ -123,10 +123,9 @@ export const createTx = async (
 
 export const cosignBroadcast = async (tx: Transaction, mnee: Mnee): Promise<{ tx: Transaction, error: string | false }> => {
   try {
-    console.log({ tx: tx.toHex() })
     const rawTxHex = tx.toHex()
     const result = await mnee.submitRawTx(rawTxHex, { broadcast: true })
-    console.log('result', result)
+    console.log({ result })
 
     // Check transaction status if we have a ticket ID
     if (result.ticketId) {

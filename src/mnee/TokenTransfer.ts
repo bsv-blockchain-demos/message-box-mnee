@@ -168,7 +168,7 @@ export type MNEETokenInstructions = {
             scope: signatureScope,
           });
 
-          console.log({ customInstructions })
+          console.log({ customInstructions, preimage: Utils.toHex(preimage) })
           const hashToDirectlySign = Hash.sha256(Hash.sha256(preimage))
           console.log({ hashToDirectlySign })
 

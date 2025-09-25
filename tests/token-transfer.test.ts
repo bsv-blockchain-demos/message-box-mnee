@@ -37,7 +37,7 @@ describe('Token Transfer', () => {
     tx.addInput({
       sourceTransaction,
       sourceOutputIndex: 0,
-      unlockingScriptTemplate: new TokenTransfer().unlock(wallet, instructions, 'all', true) 
+      unlockingScriptTemplate: new TokenTransfer().unlock(wallet, instructions, 'all', true, undefined, undefined, cosigner) 
     })
     tx.addInput({
       sourceTransaction,
@@ -59,12 +59,6 @@ describe('Token Transfer', () => {
 
     await tx.fee(1)
     await tx.sign()
-
-    const sig = Utils.toArray('304402205b5af4cf1d0932fe504415e7ff80a64d14bc2187f05ee03360a6d4344f0ee4b502206c8c4ebdd8c7fdd338b26eb5d4f0d3e3362c6cf17518a8c69d8903ac61e1dd8cc1', 'hex')
-    const replacement = new UnlockingScript()
-    replacement.writeBin(sig)
-    replacement.writeScript(Script.fromASM(tx.inputs[0]!.unlockingScript!.toASM()))
-    tx.inputs[0].unlockingScript = replacement
 
     const passes = await tx.verify(mockChain)
     expect(passes).toBe(true)    

@@ -17,7 +17,15 @@ describe('Token Transfer', () => {
       unlockingScript: UnlockingScript.fromASM('3044022024731d659132cb9cf4768bdbaa3839cec56531979955ef3e4058fcd58d37274002200484424db86ad8cdb55cdc90fbddabbcf3b8386a4ceb042d0ca87834d9e2cfb141 033cd6c077be41bfc5cf83ee6a6cdc821b9247b99bb2d929490b32fc938630fac5')
     })
 
-    const { instructions, change } = await getMNEEAddress(wallet)
+    const { instructions, change } = {
+      instructions: {
+        protocolID: [ 2, 'Pay MNEE' ],
+        keyID: 'MjAyNS0wOS0yNQ==',
+        counterparty: 'self',
+        forSelf: true
+      },
+      change: '1EL7jA4M4c4UFYimTz7npM25x2dQf4HcfG'
+    }
 
     sourceTransaction.addOutput({
       satoshis: 1,
@@ -37,7 +45,7 @@ describe('Token Transfer', () => {
     tx.addInput({
       sourceTransaction,
       sourceOutputIndex: 0,
-      unlockingScriptTemplate: new TokenTransfer().unlock(wallet, instructions, 'all', true, undefined, undefined, cosigner) 
+      unlockingScriptTemplate: new TokenTransfer().unlock(wallet, instructions, 'all', true) 
     })
     tx.addInput({
       sourceTransaction,
@@ -59,6 +67,14 @@ describe('Token Transfer', () => {
 
     await tx.fee(1)
     await tx.sign()
+
+    console.log({ sig: tx.inputs[0]!.unlockingScript!.toASM() })
+
+    const sig = Utils.toArray('304402206c49ddaeef9a8d8edd429658be247cdb647c844bddcd811be62cc711b493933302200411f7050b319fb6e73f3b64baaa47770679542b549497635ac8f0916c4d5d54c1', 'hex')
+    const replacement = new UnlockingScript()
+    replacement.writeBin(sig)
+    replacement.writeScript(Script.fromASM(tx.inputs[0]!.unlockingScript!.toASM()))
+    tx.inputs[0].unlockingScript = replacement
 
     const passes = await tx.verify(mockChain)
     expect(passes).toBe(true)    

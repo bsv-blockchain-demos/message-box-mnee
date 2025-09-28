@@ -1,7 +1,7 @@
 import { Button, CircularProgress, Stack, Typography } from '@mui/material'
 import { QRCodeCanvas } from 'qrcode.react'
 import { useCallback, useState } from 'react'
-import { GetPublicKeyArgs, Utils, PublicKey, Transaction, OP, Script, Hash } from '@bsv/sdk'
+import { Utils, PublicKey, Transaction, OP, Script, Hash } from '@bsv/sdk'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 // Define local types since the new SDK may have different type definitions
@@ -14,6 +14,7 @@ interface Inscription {
 }
 
 import { MNEETokenInstructions } from '../mnee/TokenTransfer'
+import { getMNEEAddress } from '../mnee/getAddress'
 
 export const parseInscription = (script: Script) => {
     let fromPos: number | undefined;
@@ -91,18 +92,11 @@ function FundMetanet() {
         try {
             if (!await wallet.isAuthenticated()) return
             console.log('attempting to fund wallet')
-            const instructions = {
-                protocolID: [2, 'Pay MNEE'],
-                keyID: Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,10), 'utf8')), // not random, just in case some failure prevents the saving of this data.
-                counterparty: 'self',
-                forSelf: true
-            } as GetPublicKeyArgs
+            const { instructions, change } = await getMNEEAddress(wallet)
             setCustomInstructions(instructions as MNEETokenInstructions)
-            const { publicKey } = await wallet.getPublicKey(instructions)
-            const a = PublicKey.fromString(publicKey).toAddress()
-            setAddress(a)
-            console.log({ a })
-            const balance = await mnee.balance(a)
+            setAddress(change)
+            console.log({ change })
+            const balance = await mnee.balance(change)
             setBalance((balance?.decimalAmount || 0))
         } catch (error) {
             console.error('Failed to get funding address:', error)

@@ -173,7 +173,7 @@ export type MNEETokenInstructions = {
           const unlockScript = new UnlockingScript();
 
           console.log({ customInstructions, preimage: Utils.toHex(preimage) })
-          const hashToDirectlySign = Hash.sha256(Hash.sha256(preimage))
+          const hashToDirectlySign = Hash.hash256(preimage)
           console.log({ hashToDirectlySign })
 
           if (approver) {
@@ -205,7 +205,7 @@ export type MNEETokenInstructions = {
 
           console.log({ hash: PublicKey.fromString(publicKey).toHash('hex') })
 
-          const rawSignature = Signature.fromDER(signature, 'hex')
+          const rawSignature = Signature.fromDER(signature)
           const sig = new TransactionSignature(
             rawSignature.r,
             rawSignature.s,

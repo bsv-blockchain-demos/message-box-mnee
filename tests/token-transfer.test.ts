@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { TokenTransfer } from '../src/mnee/TokenTransfer';
-import { Transaction, MerklePath, P2PKH, PrivateKey, UnlockingScript, Utils, Script } from '@bsv/sdk';
+import { Transaction, MerklePath, P2PKH, PrivateKey, UnlockingScript, Utils, Script, WalletProtocol } from '@bsv/sdk';
 import { MockChain, wallet } from './test-utils';
-import { getMNEEAddress } from '../src/mnee/getAddress';
 
 const cosigner = PrivateKey.fromHex('065204edc6aef2882ed9ddaaa58c4e35937249afa852fb5ed65bb3988bf1e861')
 const cosignerPubKey = cosigner.toPublicKey()
@@ -19,7 +18,7 @@ describe('Token Transfer', () => {
 
     const { instructions, change } = {
       instructions: {
-        protocolID: [ 2, 'Pay MNEE' ],
+        protocolID: [ 2, 'Pay MNEE' ] as WalletProtocol,
         keyID: 'MjAyNS0wOS0yNQ==',
         counterparty: 'self',
         forSelf: true

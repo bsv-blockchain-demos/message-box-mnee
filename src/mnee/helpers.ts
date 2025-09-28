@@ -5,6 +5,7 @@ import {
   ListOutputsResult,
   TransactionInput,
   TransactionOutput,
+  PrivateKey
 } from "@bsv/sdk";
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"

@@ -1,4 +1,4 @@
-import { PrivateKey, KeyDeriver, WalletInterface, ChainTracker } from '@bsv/sdk'
+import { PrivateKey, KeyDeriver, WalletInterface, ChainTracker, WalletClient } from '@bsv/sdk'
 import { Wallet, WalletStorageManager, WalletSigner, Services, StorageClient } from '@bsv/wallet-toolbox'
 import { config } from 'dotenv'
 config()

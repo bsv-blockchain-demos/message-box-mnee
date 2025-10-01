@@ -12,15 +12,23 @@ P2PMNEE is a React application that enables transferring MNEE tokens from addres
 - `npm run build` - Build the project (TypeScript compilation + Vite build)
 - `npm run lint` - Run ESLint to check code quality
 - `npm run preview` - Preview the built application
+- `npm run test` - Run tests using Vitest
+- `npm run test:ui` - Run tests with Vitest UI
 
 ## Architecture
 
 ### Core Technologies
 - **Frontend**: React 19 with TypeScript
 - **Build Tool**: Vite
+- **Testing**: Vitest with optional UI
 - **UI Framework**: Material-UI (@mui/material) with Emotion for styling
+- **UI Components**: @base-ui-components/react for additional components
 - **Routing**: React Router DOM v7
+- **Notifications**: react-toastify for user feedback
+- **QR Codes**: qrcode.react for generating QR codes
 - **BSV Integration**: @bsv/sdk for wallet operations and blockchain interactions
+- **Identity System**: @bsv/identity-react for identity management
+- **MNEE SDK**: @mnee/ts-sdk for MNEE token operations
 - **Peer Payments**: @bsv/message-box-client for P2P messaging
 
 ### Key Components
@@ -48,10 +56,19 @@ Extends MessageBoxClient for MNEE token transfers:
 ### Application Structure
 
 #### Pages
-- `/` - P2Identity: Main identity-based transfer interface
+- `/` - P2Identity: Main identity-based transfer interface with identity selector
 - `/address` - P2Address: Address-based transfer interface
 - `/fund` - FundMetanet: Funding interface for Metanet Desktop
 - `/tokens` - Token balance and transaction history
+
+#### Components
+- **AmountSelector**: Input component for MNEE token amounts
+- **Balance**: Displays current MNEE token balance with USD conversion
+- **Header**: Application header with navigation
+- **Menu**: Navigation menu component
+- **ThemedMneeLogo**: Responsive MNEE logo component
+- **IdentitySelector**: Component for selecting BSV identities for payments
+- **CustomIdentitySearchField**: Custom search interface for identity lookup
 
 #### Token Management
 - MNEE tokens stored in 'MNEE tokens' basket within BSV wallet
@@ -76,3 +93,15 @@ Extends MessageBoxClient for MNEE token transfers:
 - Production MNEE API integration with token ID and approver constants
 - Ngrok development proxy support configured in vite.config.ts
 - Public API token for MNEE proxy service integration
+
+### Testing
+- **Framework**: Vitest for unit and integration testing
+- **Environment**: jsdom for browser environment simulation
+- **UI Testing**: Optional Vitest UI for interactive test running
+- **Coverage**: Built-in coverage reporting capabilities
+
+### Additional Features
+- **Toast Notifications**: User feedback via react-toastify
+- **QR Code Generation**: Payment QR codes using qrcode.react
+- **Identity Integration**: BSV identity system for user verification
+- **Responsive Design**: Material-UI theming with custom MNEE branding

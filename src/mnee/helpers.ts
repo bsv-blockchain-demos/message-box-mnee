@@ -4,8 +4,7 @@ import {
   WalletInterface,
   ListOutputsResult,
   TransactionInput,
-  TransactionOutput,
-  PrivateKey
+  TransactionOutput
 } from "@bsv/sdk";
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
@@ -74,7 +73,7 @@ export const createTx = async (
       inputs.push({
         sourceTransaction,
         sourceOutputIndex,
-        unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions, 'all', true)
+        unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions)
       })
     }
 
@@ -88,20 +87,14 @@ export const createTx = async (
     // Prepare outputs
     const outputs: TransactionOutput[] = [
       {
-        // outputDescription: 'Paying MNEE to recipient address',
         lockingScript: new TokenTransfer().lock(address, units),
         satoshis: 1
       },
       {
-        // outputDescription: 'MNEE change output',
-        satoshis: 1,
         lockingScript: new TokenTransfer().lock(changeAddress, remainder),
-        // basket: 'MNEE tokens',
-        // customInstructions: JSON.stringify(changeInstructions),
-        // tags: ['MNEE', 'change']
+        satoshis: 1
       },
       {
-        // outputDescription: 'MNEE fee paid to service provider',
         lockingScript: new TokenTransfer().lock(config.feeAddress, fee),
         satoshis: 1
       }

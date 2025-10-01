@@ -170,7 +170,7 @@ export type MNEETokenInstructions = {
             scope: signatureScope,
           });
           
-          const unlockScript = new UnlockingScript();
+          const unlockScript = new UnlockingScript()
 
           console.log({ customInstructions, preimage: Utils.toHex(preimage) })
           const hashToDirectlySign = Hash.hash256(preimage)
@@ -210,14 +210,12 @@ export type MNEETokenInstructions = {
             rawSignature.r,
             rawSignature.s,
             signatureScope
-          );
+          )
           const txSig = sig.toChecksigFormat()
           console.log({ txSig: Utils.toHex(txSig) })
-          unlockScript.writeBin(txSig);
-          unlockScript.writeBin(
-            PublicKey.fromString(publicKey).encode(true) as number[]
-          );
-          return unlockScript;
+          unlockScript.writeBin(txSig)
+          unlockScript.writeBin(PublicKey.fromString(publicKey).toDER() as number[])
+          return unlockScript
         },
         estimateLength: async () => {
           // public key (1+33) + signature (1+73) + approver signature (1+73)

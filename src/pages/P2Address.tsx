@@ -47,13 +47,6 @@ function P2Address() {
 
       const response: { tx: Transaction, error: string | false} = await cosignBroadcast(createTxRes.tx, mnee)
       if (response?.tx) {
-        
-        const valid = await mnee.validateMneeTx(response.tx.toHex())
-        if (!valid) {
-          toast.error('Invalid transaction was retrieved, did not pass SPV')
-          return
-        }
-
         const internalizeResponse = await wallet.internalizeAction({
           tx: response.tx.toAtomicBEEF(),
           outputs: [{
@@ -70,6 +63,17 @@ function P2Address() {
         if (!internalizeResponse.accepted) {
           toast.error('Wallet rejected the change output')
         } else {
+          // relinquish each input that was a token spent
+          createTxRes.tx.inputs.forEach(async input => {
+            const txid = input.sourceTransaction?.id('hex')
+            const vout = input.sourceOutputIndex
+            if (txid && vout) {
+              await wallet.relinquishOutput({
+                basket: 'MNEE tokens',
+                output: txid + '.' + vout
+              })
+            }
+          })
           toast.success(`Payment sent! TXID: ${response.tx.id('hex')}`)
           setAddress('')
           setAmount(0)

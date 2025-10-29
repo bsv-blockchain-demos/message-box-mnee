@@ -10,7 +10,7 @@ import {
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
 import Mnee, { MNEEConfig } from "@mnee/ts-sdk"
-import { PROD_APPROVER } from "./constants"
+import { PROD_APPROVER, PROD_TOKEN_ID } from "./constants"
 
 const approver = PublicKey.fromString(PROD_APPROVER)
 
@@ -92,15 +92,15 @@ export const createTx = async (
     // Prepare outputs
     const outputs: TransactionOutput[] = [
       {
-        lockingScript: new TokenTransfer().lock(address, units, approver),
+        lockingScript: new TokenTransfer().lock(address, units, approver, PROD_TOKEN_ID),
         satoshis: 1
       },
       {
-        lockingScript: new TokenTransfer().lock(changeAddress, remainder, approver),
+        lockingScript: new TokenTransfer().lock(changeAddress, remainder, approver, PROD_TOKEN_ID),
         satoshis: 1
       },
       {
-        lockingScript: new TokenTransfer().lock(config.feeAddress, fee, approver),
+        lockingScript: new TokenTransfer().lock(config.feeAddress, fee, approver, PROD_TOKEN_ID),
         satoshis: 1
       }
     ]
@@ -128,20 +128,35 @@ export const cosignBroadcast = async (tx: Transaction, mnee: Mnee): Promise<{ tx
 
     // Check transaction status if we have a ticket ID
     if (result.ticketId) {
-      const status = await mnee.getTxStatus(result.ticketId)
-      console.log({ status })
-      if (status.tx_hex) {
-        const returnedTx = Transaction.fromHex(status.tx_hex)
-        await Promise.all(returnedTx.inputs.map(async (input, vin) => {
-          let sourceTransaction = tx.inputs?.[vin]?.sourceTransaction
-          if (!sourceTransaction) {
-            console.log('retrieving source tx:', tx.inputs[vin]!.sourceTXID)
-            sourceTransaction = await fetchBeef(tx.inputs[vin]!.sourceTXID!)
-          }
-          input.sourceTransaction = sourceTransaction
-        }))
-        return { tx: returnedTx, error: false }
+      // Wait 2 seconds before first check
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      let status
+      let attempts = 0
+      do {
+        status = await mnee.getTxStatus(result.ticketId)
+        console.log({ status })
+        attempts++
+        if (!status.tx_hex && attempts < 10) {
+          // Wait 2 seconds before retrying
+          await new Promise(resolve => setTimeout(resolve, 2000))
+        }
+      } while (!status.tx_hex && attempts < 10)
+
+      if (!status.tx_hex) {
+        return { tx: new Transaction(), error: 'Failed to broadcast transaction' }
       }
+
+      const returnedTx = Transaction.fromHex(status.tx_hex)
+      await Promise.all(returnedTx.inputs.map(async (input, vin) => {
+        let sourceTransaction = tx.inputs?.[vin]?.sourceTransaction
+        if (!sourceTransaction) {
+          console.log('retrieving source tx:', returnedTx.inputs[vin]!.sourceTXID)
+          sourceTransaction = await fetchBeef(returnedTx.inputs[vin]!.sourceTXID!)
+        }
+        input.sourceTransaction = sourceTransaction
+      }))
+      return { tx: returnedTx, error: false }
     }
     return { tx: new Transaction(), error: 'Failed to broadcast transaction' }
   } catch (error) {

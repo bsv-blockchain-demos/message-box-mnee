@@ -3,9 +3,9 @@ import { WalletClient, Utils, PublicKey, AtomicBEEF, Base64String, Beef, ListOut
 import { Logger } from './Logger.js'
 import { MNEETokenInstructions, TokenTransfer } from '../mnee/TokenTransfer.js'
 import { parseInscription } from '../pages/FundMetanet.js'
-import { MNEE_PROXY_API_URL, PROD_ADDRESS, PUBLIC_PROD_MNEE_API_TOKEN } from '../mnee/constants'
+import { PROD_APPROVER, PROD_TOKEN_ID } from '../mnee/constants'
 import { cosignBroadcast } from '../mnee/helpers.js'
-import Mnee from '@mnee/ts-sdk'
+import Mnee, { MNEEConfig } from '@mnee/ts-sdk'
 
 export const MNEE_PAYMENT_MESSAGEBOX = 'mnee_payment_inbox'
 
@@ -54,28 +54,28 @@ export class MneePeerPayClient extends MessageBoxClient {
     this.mnee = mnee
   }
 
-  static async fetchBeef(txid: string): Promise<number[]> {
-    const beef = await (await fetch(`${MNEE_PROXY_API_URL}/v5/tx/${txid}/beef`)).arrayBuffer()
-    const bufferArray = new Uint8Array(beef)
-    return Array.from(bufferArray)
+  static async fetchBeef(txid: string): Promise<Transaction> {
+    const beef = await (await fetch(`https://api.whatsonchain.com/v1/bsv/main/tx/${txid}/beef`)).text()
+    return Transaction.fromHexBEEF(beef)
   }
 
   async createTx(
     tokens: ListOutputsResult,
     beneficiary: string,
-    units: number
+    units: number,
+    config: MNEEConfig
   ): Promise<{ tokensOnlyTx: Transaction, tx: Transaction, keyID: Base64String }> {
     const tx = new Transaction()
     let unitsIn = 0
-  
+
     // do we have any MNEE?
     if (tokens.outputs.length === 0) {
       throw new Error('No MNEE tokens to spend')
     }
-  
+
     // do we have enough to cover what we're sending and fee?
     for (const token of tokens.outputs) {
-      if (unitsIn >= units + 1000) break 
+      if (unitsIn >= units + 1000) break
       const [txid, vout] = token.outpoint.split('.')
       const beef = Beef.fromBinary(tokens.BEEF as number[])
       const sourceTransaction = beef.findAtomicTransaction(txid)
@@ -96,12 +96,24 @@ export class MneePeerPayClient extends MessageBoxClient {
         unlockingScriptTemplate: new TokenTransfer().unlock(this.peerPayWalletClient, customInstructions, 'all', true), // ANYONECANPAY
       })
     }
-    const fee = (unitsIn >= 1000001) ? 1000 : 100
-  
+
+    // Get proper fee calculation from MNEE config
+    const transferAtomic = units
+    const feeTier = config.fees.find(tier =>
+      transferAtomic >= tier.min && transferAtomic <= tier.max
+    )
+
+    if (!feeTier) {
+      throw new Error('No fee tier found for transfer amount')
+    }
+
+    const fee = feeTier.fee
+    console.log(`Transfer fee: ${this.mnee.fromAtomicAmount(fee)} MNEE`)
+
     if (unitsIn < units + fee) {
       throw new Error('Insufficient MNEE tokens to spend')
     }
-  
+
     const remainder = unitsIn - units - fee
 
     const keyID = Utils.toBase64(Utils.toArray(new Date().toISOString().slice(0,16), 'utf8'))
@@ -117,31 +129,41 @@ export class MneePeerPayClient extends MessageBoxClient {
       keyID,
       counterparty: 'self'
     })
-  
+
+    const approver = PublicKey.fromString(PROD_APPROVER)
+
     // pay the person you're trying to pay
     tx.addOutput({
-      lockingScript: new TokenTransfer().lock(PublicKey.fromString(beneficiaryKey).toAddress(), units),
+      lockingScript: new TokenTransfer().lock(PublicKey.fromString(beneficiaryKey).toAddress(), units, approver, PROD_TOKEN_ID),
       satoshis: 1
     })
-  
+
     // keep the change yourself.
     tx.addOutput({
       satoshis: 1,
-      lockingScript: new TokenTransfer().lock(PublicKey.fromString(originatorKey).toAddress(), remainder)
+      lockingScript: new TokenTransfer().lock(PublicKey.fromString(originatorKey).toAddress(), remainder, approver, PROD_TOKEN_ID)
     })
-  
+
     // this output is to pay the issuer
     tx.addOutput({
-      lockingScript: new TokenTransfer().lock(PROD_ADDRESS, fee),
+      lockingScript: new TokenTransfer().lock(config.feeAddress, fee, approver, PROD_TOKEN_ID),
       satoshis: 1
     })
-  
+
+    // Store the original transaction before co-signing
+    const tokensOnlyTx = tx
+
     // get signatures from Metanet Desktop
     await tx.sign()
-  
+
+    // Use MNEE API to co-sign and broadcast the transaction
     const responseFromMnee = await cosignBroadcast(tx, this.mnee)
-    if (!responseFromMnee?.tx) throw new Error('Failed to broadcast transaction')
-    return { tokensOnlyTx: tx, tx: responseFromMnee.tx, keyID }
+    if (responseFromMnee.error || !responseFromMnee.tx) {
+      throw new Error(responseFromMnee.error || 'Failed to broadcast transaction')
+    }
+
+    // The returned transaction from MNEE has the co-signatures
+    return { tokensOnlyTx, tx: responseFromMnee.tx, keyID }
   }
 
   /**
@@ -156,32 +178,33 @@ export class MneePeerPayClient extends MessageBoxClient {
    * @returns {Promise<any>} Resolves with the payment result.
    * @throws {Error} If the recipient is missing or the amount is invalid.
    */
-  async sendPayment(tokens: ListOutputsResult, beneficiary: string, units: number): Promise<any> {
+  async sendPayment(tokens: ListOutputsResult, beneficiary: string, units: number, config: MNEEConfig): Promise<any> {
     if (beneficiary == null || beneficiary.trim() === '' || units <= 0) {
       throw new Error('Invalid payment details: beneficiary and valid units are required')
     }
 
-    const { tokensOnlyTx, tx, keyID } = await this.createTx(tokens, beneficiary, units)
+    const { tokensOnlyTx, tx, keyID } = await this.createTx(tokens, beneficiary, units, config)
     if (!tx || !keyID) {
       throw new Error('Failed to create transaction')
     }
 
     const { publicKey: originator } = await this.peerPayWalletClient.getPublicKey({ identityKey: true })
 
-    // construct an atomic beef from the current txs plus inputs.
+    // Construct an atomic beef from the co-signed tx (which is already broadcast by MNEE)
+    // Ensure all inputs have their source transactions attached
     await Promise.all(tx.inputs.map(async input => {
       const txid = input.sourceTXID as string
       const createdInput = tokensOnlyTx.inputs.find(tx => tx.sourceTXID === txid)
       if (createdInput) {
         input.sourceTransaction = createdInput.sourceTransaction
       } else {
-        const atomicBeefForThisInput = await MneePeerPayClient.fetchBeef(txid)
-        input.sourceTransaction = Transaction.fromAtomicBEEF(atomicBeefForThisInput)
+        input.sourceTransaction = await MneePeerPayClient.fetchBeef(txid)
       }
     }))
 
     const atomicBEEF = tx.toAtomicBEEF()
 
+    // Relinquish the spent token inputs
     const spent = tokensOnlyTx.inputs.map(input => (input.sourceTXID + '.' + input.sourceOutputIndex) as OutpointString)
     await Promise.all(spent.map(async output => {
       const { relinquished } = await this.peerPayWalletClient.relinquishOutput({
@@ -192,10 +215,11 @@ export class MneePeerPayClient extends MessageBoxClient {
         console.error('Failed to relinquish output')
       }
     }))
-    
+
+    // Internalize the change output (output index 1) - similar to P2Address flow
     const { accepted } = await this.peerPayWalletClient.internalizeAction({
       tx: atomicBEEF,
-      description: 'Receive MNEE tokens',
+      description: 'Send MNEE tokens to identity',
       labels: ['MNEE'],
       outputs: [{
         outputIndex: 1,
@@ -207,12 +231,12 @@ export class MneePeerPayClient extends MessageBoxClient {
             keyID,
             counterparty: 'self'
           }),
-          tags: ['MNEE']
+          tags: ['MNEE', 'change']
         }
       }]
     })
     if (!accepted) {
-      console.error('Failed to internalize action')
+      throw new Error('Wallet rejected the change output')
     }
 
     const payment = {

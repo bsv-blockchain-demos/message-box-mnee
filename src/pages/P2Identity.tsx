@@ -9,7 +9,7 @@ import { IdentityProps } from '@bsv/identity-react'
 export default function P2Identity () {
     const [loading, setLoading] = useState(false)
     const [amount, setAmount] = useState<number>(0)
-    const { wallet, tokens, balance, getBalance, mneePeerPayClient } = useWallet()
+    const { wallet, tokens, balance, getBalance, mneePeerPayClient, config } = useWallet()
     const [selectedIdentity, setSelectedIdentity] = useState<IdentityProps | null>(null)
 
     const getInboundPayments = useCallback(async () => {
@@ -45,8 +45,8 @@ export default function P2Identity () {
           toast.error('Insufficient balance')
           return
         }
-        console.log('Pay', selectedIdentity?.identityKey, amount) 
-        const paid = await mneePeerPayClient.sendPayment(tokens, selectedIdentity?.identityKey!, units)
+        console.log('Pay', selectedIdentity?.identityKey, amount)
+        const paid = await mneePeerPayClient.sendPayment(tokens, selectedIdentity?.identityKey!, units, config)
         if (paid.status === 'success') {
           console.log({ paid })
           toast.success('Payment sent successfully')

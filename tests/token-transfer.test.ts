@@ -3,14 +3,17 @@ import { TokenTransfer } from '../src/mnee/TokenTransfer';
 import { Transaction, MerklePath, P2PKH, PrivateKey, UnlockingScript, Utils, Script, WalletProtocol, WalletClient, Hash, TransactionSignature, Signature, PublicKey } from '@bsv/sdk';
 import { MockChain, wallet } from './test-utils';
 import { getMNEEAddress } from '../src/mnee/getAddress'
+import { MNEETokenInstructions } from '../src/mnee/TokenTransfer'
 
 const cosigner = PrivateKey.fromHex('065204edc6aef2882ed9ddaaa58c4e35937249afa852fb5ed65bb3988bf1e861')
 const cosignerPubKey = cosigner.toPublicKey()
+const mockChain = new MockChain({ blockheaders: [] })
+const sourceTransaction = new Transaction()
+let customInstructions: MNEETokenInstructions
+let changeAddress: string
 
 describe('Token Transfer', () => {
-  it('should create a valid locking script for MNEE tokens', async () => {
-    
-    const sourceTransaction = new Transaction()
+  beforeAll(async () => {
     sourceTransaction.addInput({
       sourceTXID: '0000000000000000000000000000000000000000000000000000000000000000',
       sourceOutputIndex: 0,
@@ -18,10 +21,12 @@ describe('Token Transfer', () => {
     })
 
     const { instructions, change } = await getMNEEAddress(wallet)
+    customInstructions = instructions
+    changeAddress = change
 
     sourceTransaction.addOutput({
       satoshis: 1,
-      lockingScript: new TokenTransfer().lock(change, 1000, cosignerPubKey)
+      lockingScript: new TokenTransfer().lock(changeAddress, 1000, cosignerPubKey)
     })
 
     sourceTransaction.addOutput({
@@ -31,13 +36,15 @@ describe('Token Transfer', () => {
 
     const txid = sourceTransaction.id('hex')
     sourceTransaction.merklePath = new MerklePath(0, [[{ txid: true, offset: 0, hash: txid }]])
-    const mockChain = new MockChain({ blockheaders: [txid] })
+    mockChain.addBlock(txid)
+  })
 
+  it('should create a valid locking script for MNEE tokens', async () => {
     const tx = new Transaction()
     tx.addInput({
       sourceTransaction,
       sourceOutputIndex: 0,
-      unlockingScriptTemplate: new TokenTransfer().unlock(wallet, instructions, 'all', true, undefined, undefined, cosigner) 
+      unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions, 'all', true, undefined, undefined, cosigner) 
     })
     tx.addInput({
       sourceTransaction,
@@ -46,11 +53,11 @@ describe('Token Transfer', () => {
     })
     tx.addOutput({
       satoshis: 1,
-      lockingScript: new TokenTransfer().lock(change, 900, cosignerPubKey)
+      lockingScript: new TokenTransfer().lock(changeAddress, 900, cosignerPubKey)
     })
     tx.addOutput({
       satoshis: 1,
-      lockingScript: new TokenTransfer().lock(change, 100, cosignerPubKey)
+      lockingScript: new TokenTransfer().lock(changeAddress, 100, cosignerPubKey)
     })
     tx.addOutput({
       change: true,
@@ -67,4 +74,8 @@ describe('Token Transfer', () => {
 
     console.log({ tx: tx.toHex() })
   });
+
+  it('should create a partially signed tx in the first action and complete it successfully thereafter') {
+    
+  }
 });

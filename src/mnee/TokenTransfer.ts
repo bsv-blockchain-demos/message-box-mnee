@@ -14,7 +14,6 @@ import {
     WalletProtocol,
     PrivateKey,
   } from "@bsv/sdk";
-import { PROD_APPROVER, PROD_TOKEN_ID } from "./constants";
 
 export type MNEETokenInstructions = {
     protocolID: WalletProtocol
@@ -39,8 +38,8 @@ export type MNEETokenInstructions = {
     lock(
       address: string | number[],
       units: number,
-      approverPubKey: PublicKey = PublicKey.fromString(PROD_APPROVER),
-      assetId: string = PROD_TOKEN_ID
+      approverPubKey: PublicKey = PublicKey.fromString(''),
+      assetId: string = ''
     ): LockingScript {
       let pkhash: number[] = [];
       if (typeof address === "string") {

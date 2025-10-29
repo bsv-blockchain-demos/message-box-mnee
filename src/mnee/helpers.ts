@@ -4,11 +4,15 @@ import {
   WalletInterface,
   ListOutputsResult,
   TransactionInput,
-  TransactionOutput
+  TransactionOutput,
+  PublicKey
 } from "@bsv/sdk";
 import { TokenTransfer, MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { parseInscription } from "../pages/FundMetanet"
 import Mnee, { MNEEConfig } from "@mnee/ts-sdk"
+import { PROD_APPROVER } from "./constants"
+
+const approver = PublicKey.fromString(PROD_APPROVER)
 
 export const fetchBeef = async (txid: string): Promise<Transaction> => {
   const beef = await (await fetch(`https://api.whatsonchain.com/v1/bsv/main/tx/${txid}/beef`)).text()
@@ -73,7 +77,8 @@ export const createTx = async (
       inputs.push({
         sourceTransaction,
         sourceOutputIndex,
-        unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions)
+        unlockingScriptTemplate: new TokenTransfer().unlock(wallet, customInstructions, 'all', true),
+        sequence: 0xffffffff
       })
     }
 
@@ -87,15 +92,15 @@ export const createTx = async (
     // Prepare outputs
     const outputs: TransactionOutput[] = [
       {
-        lockingScript: new TokenTransfer().lock(address, units),
+        lockingScript: new TokenTransfer().lock(address, units, approver),
         satoshis: 1
       },
       {
-        lockingScript: new TokenTransfer().lock(changeAddress, remainder),
+        lockingScript: new TokenTransfer().lock(changeAddress, remainder, approver),
         satoshis: 1
       },
       {
-        lockingScript: new TokenTransfer().lock(config.feeAddress, fee),
+        lockingScript: new TokenTransfer().lock(config.feeAddress, fee, approver),
         satoshis: 1
       }
     ]

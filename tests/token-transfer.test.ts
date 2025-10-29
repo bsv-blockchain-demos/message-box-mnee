@@ -74,8 +74,4 @@ describe('Token Transfer', () => {
 
     console.log({ tx: tx.toHex() })
   });
-
-  it('should create a partially signed tx in the first action and complete it successfully thereafter') {
-    
-  }
 });

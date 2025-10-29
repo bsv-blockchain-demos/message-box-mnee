@@ -44,18 +44,7 @@ function P2Address() {
         toast.error(e)
         return
       }
-      try {
-        const mySigValid = await createTxRes.tx.verify()
-        if (!mySigValid) {
-          toast.error('Failed to verify my own signature')
-          console.error(mySigValid)
-          return
-        }
-      } catch (e) {
-        toast.error('Failed to verify my own signature')
-        console.error(e)
-        return
-      }
+
       const response: { tx: Transaction, error: string | false} = await cosignBroadcast(createTxRes.tx, mnee)
       if (response?.tx) {
         

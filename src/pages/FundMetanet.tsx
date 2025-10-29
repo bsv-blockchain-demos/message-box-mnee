@@ -1,7 +1,7 @@
 import { Button, CircularProgress, Stack, Typography } from '@mui/material'
 import { QRCodeCanvas } from 'qrcode.react'
 import { useCallback, useState } from 'react'
-import { Utils, PublicKey, Transaction, OP, Script, Hash } from '@bsv/sdk'
+import { Utils, Transaction, OP, Script, Hash } from '@bsv/sdk'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
 // Define local types since the new SDK may have different type definitions

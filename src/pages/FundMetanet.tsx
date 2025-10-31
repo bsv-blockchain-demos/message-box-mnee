@@ -1,9 +1,11 @@
 import { Button, CircularProgress, Stack, Typography } from '@mui/material'
 import { QRCodeCanvas } from 'qrcode.react'
-import { useCallback, useState } from 'react'
-import { Utils, Transaction, OP, Script, Hash } from '@bsv/sdk'
+import { useCallback, useState, useEffect } from 'react'
+import { Utils, OP, Script, Hash } from '@bsv/sdk'
 import { useWallet } from '../context/WalletContext'
 import { toast } from 'react-toastify'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 // Define local types since the new SDK may have different type definitions
 interface Inscription {
   file: { hash: string; size: number; type: string; content?: number[] };
@@ -15,6 +17,7 @@ interface Inscription {
 
 import { MNEETokenInstructions } from '../mnee/TokenTransfer'
 import { getMNEEAddress } from '../mnee/getAddress'
+import { fetchBeef } from '../mnee/helpers'
 
 export const parseInscription = (script: Script) => {
     let fromPos: number | undefined;
@@ -77,31 +80,56 @@ function FundMetanet() {
     const [customInstructions, setCustomInstructions] = useState<MNEETokenInstructions | null>(null)
     const [address, setAddress] = useState<string>('')
     const [balance, setBalance] = useState<number>(0)
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
     const parseUnitsFromRecentUtxos = async (recent: any) => {
-        const raw = await (await fetch(`https://api.whatsonchain.com/v1/bsv/main/tx/${recent.txid}/beef`)).text()
-        const beef = Utils.toArray(raw, 'hex')
-        const tx = Transaction.fromBEEF(beef)
+        const tx = await fetchBeef(recent.txid)
         // const valid = await tx.verify()
         // if (!valid) toast.error('Invalid transaction was retrieved, did not pass SPV')
         const units = recent.data.bsv21.amt
         return { units, atomicBEEF: tx.toAtomicBEEF() }
     }
 
-    const getFundingAddress = useCallback(async () => {
+    const updateAddress = useCallback(async (date: Date) => {
         try {
             if (!await wallet.isAuthenticated()) return
-            console.log('attempting to fund wallet')
-            const { instructions, change } = await getMNEEAddress(wallet)
+            console.log('updating address for date', date)
+            const { instructions, change } = await getMNEEAddress(wallet, date)
             setCustomInstructions(instructions as MNEETokenInstructions)
             setAddress(change)
             console.log({ change })
             const balance = await mnee.balance(change)
             setBalance((balance?.decimalAmount || 0))
         } catch (error) {
-            console.error('Failed to get funding address:', error)
+            console.error('Failed to update address:', error)
         }
-    }, [wallet])
+    }, [wallet, mnee])
+
+    const getFundingAddress = useCallback(async () => {
+        await updateAddress(selectedDate)
+    }, [updateAddress, selectedDate])
+
+    const goToPreviousDay = useCallback(() => {
+        setSelectedDate(prev => {
+            const newDate = new Date(prev)
+            newDate.setDate(newDate.getDate() - 1)
+            return newDate
+        })
+    }, [])
+
+    const goToNextDay = useCallback(() => {
+        setSelectedDate(prev => {
+            const newDate = new Date(prev)
+            newDate.setDate(newDate.getDate() + 1)
+            return newDate
+        })
+    }, [])
+
+    useEffect(() => {
+        if (address) {
+            updateAddress(selectedDate)
+        }
+    }, [selectedDate, address, updateAddress])
 
     const listenForFundsAndInteralize = useCallback(async () => {
         try {
@@ -154,6 +182,11 @@ function FundMetanet() {
             </>
             : <>
                 <Typography variant="subtitle1">Send MNEE to your Metanet Wallet</Typography>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                    <Button onClick={goToPreviousDay} startIcon={<ArrowBackIcon />} />
+                    <Typography variant="h6">{selectedDate.toDateString()}</Typography>
+                    <Button onClick={goToNextDay} startIcon={<ArrowForwardIcon />} />
+                </Stack>
                 <QRCodeCanvas value={address} size={160} />
                 <Typography variant="body1">{address}</Typography>
                 <Typography variant="caption" color="text.secondary">Balance {balance.toLocaleString(['en-US'], { style: 'currency', currency: 'USD' })}</Typography>

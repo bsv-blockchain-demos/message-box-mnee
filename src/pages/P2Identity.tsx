@@ -9,7 +9,7 @@ import { IdentityProps } from '@bsv/identity-react'
 export default function P2Identity () {
     const [loading, setLoading] = useState(false)
     const [amount, setAmount] = useState<number>(0)
-    const { wallet, tokens, balance, getBalance, mneePeerPayClient, config } = useWallet()
+    const { tokens, balance, getBalance, mneePeerPayClient, config } = useWallet()
     const [selectedIdentity, setSelectedIdentity] = useState<IdentityProps | null>(null)
 
     const getInboundPayments = useCallback(async () => {
@@ -30,7 +30,7 @@ export default function P2Identity () {
       } finally {
         setLoading(false)
       }
-    }, [mneePeerPayClient])
+    }, [mneePeerPayClient, getBalance])
 
     const pay = useCallback(async () => {
       try {
@@ -46,13 +46,13 @@ export default function P2Identity () {
           return
         }
         console.log('Pay', selectedIdentity?.identityKey, amount)
-        const paid = await mneePeerPayClient.sendPayment(tokens, selectedIdentity?.identityKey!, units, config)
-        if (paid.status === 'success') {
-          console.log({ paid })
-          toast.success('Payment sent successfully')
-        } else {
-          toast.error('Failed to send payment')
+        if (!selectedIdentity?.identityKey) {
+          toast.error('No identity selected')
+          return
         }
+        const paid = await mneePeerPayClient.sendPayment(tokens, selectedIdentity.identityKey, units, config)
+        console.log({ paid })
+        toast.success('Payment sent successfully')
         getBalance()
       } catch (error) {
         toast.error('Failed to send payment')
@@ -60,7 +60,7 @@ export default function P2Identity () {
       } finally {
         setLoading(false)
       }
-    }, [selectedIdentity, amount, wallet, tokens, mneePeerPayClient])
+    }, [selectedIdentity, amount, tokens, mneePeerPayClient, balance, config, getBalance])
     
     return (<Stack direction="column" alignItems="center" justifyContent="space-between" spacing={3} sx={{ pb: 5 }}>
       <Typography textAlign='center' variant="caption" color="text.secondary">Send MNEE to a certified identity.</Typography>

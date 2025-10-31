@@ -39,8 +39,8 @@ const CustomIdentitySearchField: React.FC<CustomIdentitySearchFieldProps> = ({
   }
 
   return (
-    <IdentitySearchField 
-      theme={modifiedTheme as any} 
+    <IdentitySearchField
+      theme={modifiedTheme as Theme}
       onIdentitySelected={onIdentitySelected}
     />
   )

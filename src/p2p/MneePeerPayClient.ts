@@ -178,7 +178,7 @@ export class MneePeerPayClient extends MessageBoxClient {
    * @returns {Promise<any>} Resolves with the payment result.
    * @throws {Error} If the recipient is missing or the amount is invalid.
    */
-  async sendPayment(tokens: ListOutputsResult, beneficiary: string, units: number, config: MNEEConfig): Promise<any> {
+  async sendPayment(tokens: ListOutputsResult, beneficiary: string, units: number, config: MNEEConfig): Promise<{ payment: PaymentToken, paymentResult: unknown }> {
     if (beneficiary == null || beneficiary.trim() === '' || units <= 0) {
       throw new Error('Invalid payment details: beneficiary and valid units are required')
     }
@@ -239,7 +239,7 @@ export class MneePeerPayClient extends MessageBoxClient {
       throw new Error('Wallet rejected the change output')
     }
 
-    const payment = {
+    const payment: PaymentToken = {
       keyID,
       originator,
       beneficiary,
@@ -248,11 +248,13 @@ export class MneePeerPayClient extends MessageBoxClient {
     }
 
     // Ensure the recipient is included before sending
-    return await this.sendMessage({
+    const paymentResult = await this.sendMessage({
       recipient: beneficiary,
       messageBox: MNEE_PAYMENT_MESSAGEBOX,
       body: payment
     })
+
+    return { payment, paymentResult }
   }
 
   /**
@@ -318,7 +320,7 @@ export class MneePeerPayClient extends MessageBoxClient {
    * @returns {Promise<any>} Resolves with the payment result if successful.
    * @throws {Error} If payment processing fails.
    */
-  async acceptPayment(payment: IncomingPayment): Promise<any> {
+  async acceptPayment(payment: IncomingPayment): Promise<{ payment: IncomingPayment, paymentResult: unknown } | string> {
     try {
       Logger.log(`[PP CLIENT] Processing payment: ${JSON.stringify(payment, null, 2)}`)
 
@@ -363,7 +365,7 @@ export class MneePeerPayClient extends MessageBoxClient {
    * @param {IncomingPayment} payment - The payment object containing transaction details.
    * @returns {Promise<void>} Resolves when the payment is either acknowledged or refunded.
    */
-  async rejectPayment(_: IncomingPayment): Promise<void> {
+  async rejectPayment(): Promise<void> {
     throw new Error('Not implemented yet')
     // Logger.log(`[PP CLIENT] Rejecting payment: ${JSON.stringify(payment, null, 2)}`);
     // Logger.log('[PP CLIENT] Accepting payment before refunding...');
@@ -397,10 +399,10 @@ export class MneePeerPayClient extends MessageBoxClient {
   async listIncomingPayments(): Promise<IncomingPayment[]> {
     const messages = await this.listMessages({ messageBox: MNEE_PAYMENT_MESSAGEBOX })
 
-    return messages.map((msg: any) => ({
+    return messages.map((msg: PeerMessage) => ({
       messageId: msg.messageId,
       sender: msg.sender,
-      token: JSON.parse(msg.body)
+      token: (typeof msg.body === 'string' ? JSON.parse(msg.body) : msg.body) as PaymentToken
     }))
   }
 }

@@ -9,7 +9,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 // Define local types since the new SDK may have different type definitions
 interface Inscription {
   file: { hash: string; size: number; type: string; content?: number[] };
-  fields: Record<string, any>;
+  fields: Record<string, unknown>;
   op?: string;
   id?: string;
   amt?: string;
@@ -82,7 +82,7 @@ function FundMetanet() {
     const [balance, setBalance] = useState<number>(0)
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
-    const parseUnitsFromRecentUtxos = async (recent: any) => {
+    const parseUnitsFromRecentUtxos = async (recent: { txid: string, data: { bsv21: { amt: number } } }) => {
         const tx = await fetchBeef(recent.txid)
         // const valid = await tx.verify()
         // if (!valid) toast.error('Invalid transaction was retrieved, did not pass SPV')

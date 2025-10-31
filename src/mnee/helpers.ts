@@ -33,7 +33,7 @@ export const createTx = async (
 
     // do we have any MNEE?
     if (tokens.outputs.length === 0) {
-      return { tx: new Transaction(), error: 'No MNEE tokens to spend' }
+      return { tx: new Transaction(), remainder: 0, error: 'No MNEE tokens to spend' }
     }
 
     // Get proper fee calculation from MNEE config
@@ -43,7 +43,7 @@ export const createTx = async (
     )
 
     if (!feeTier) {
-      return { tx: new Transaction(), error: 'No fee tier found for transfer amount' }
+      return { tx: new Transaction(), remainder: 0, error: 'No fee tier found for transfer amount' }
     }
 
     const fee = feeTier.fee
@@ -60,7 +60,7 @@ export const createTx = async (
       const sourceTransaction = beef.findAtomicTransaction(txid)
       if (!sourceTransaction) {
         console.error('Failed to find source transaction')
-        return { tx: new Transaction(), error: 'Failed to find source transaction' }
+        return { tx: new Transaction(), remainder: 0, error: 'Failed to find source transaction' }
       }
 
       // Get the MNEE amount from inscription
@@ -84,7 +84,7 @@ export const createTx = async (
 
     console.log({ unitsIn, units, fee })
     if (unitsIn < units + fee) {
-      return { tx: new Transaction(), error: 'Insufficient MNEE tokens to spend' }
+      return { tx: new Transaction(), remainder: 0, error: 'Insufficient MNEE tokens to spend' }
     }
 
     const remainder = unitsIn - units - fee

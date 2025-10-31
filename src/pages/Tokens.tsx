@@ -1,6 +1,6 @@
 import { Stack, Typography, IconButton, Tooltip } from "@mui/material"
 import { Link } from "@mui/icons-material"
-import { useWallet } from "../context/WalletContext"
+import { useWallet, DisplayToken } from "../context/WalletContext"
 import { useEffect } from "react"
 
 export default function Tokens
@@ -9,7 +9,7 @@ export default function Tokens
 
     useEffect(() => {
         getBalance()
-    }, [])
+    }, [getBalance])
 
     return (
       <Stack width="100%" maxWidth={640} sx={{ pb: 5 }}>
@@ -21,7 +21,7 @@ export default function Tokens
             <Typography variant="subtitle1" sx={{ flex: 1, textAlign: 'right' }}>vout</Typography>
             <Typography variant="subtitle1" sx={{ width: 48 }}></Typography>
           </Stack>
-          {displayTokens?.map((token: any) => (
+          {displayTokens?.map((token: DisplayToken) => (
               <Stack key={token.outpoint} direction="row" spacing={2} alignItems="center" sx={{ width: '100%', py: 1 }}>
                 <Typography variant="subtitle1" sx={{ flex: 2 }}>{token.amt}</Typography>
                 <Typography variant="body2" sx={{ flex: 9, color: 'text.secondary', overflow: 'hidden', textOverflow: 'ellipsis' }}>

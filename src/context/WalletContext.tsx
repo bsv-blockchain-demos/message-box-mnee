@@ -17,6 +17,12 @@ const mneePeerPayClient = new MneePeerPayClient({
     enableLogging: true
 }, mnee)
 
+export interface DisplayToken extends WalletOutput {
+    amt?: string
+    txid?: string
+    vout?: string
+}
+
 export type WalletContextValue = {
     wallet: WalletClient
     mnee: Mnee
@@ -24,8 +30,8 @@ export type WalletContextValue = {
     tokens: ListOutputsResult
     getBalance: () => void
     setTokens: (tokens: ListOutputsResult) => void
-    displayTokens: any[]
-    setDisplayTokens: (tokens: any[]) => void
+    displayTokens: DisplayToken[]
+    setDisplayTokens: (tokens: DisplayToken[]) => void
     mneePeerPayClient: MneePeerPayClient
     config: MNEEConfig
 }
@@ -59,7 +65,7 @@ export const formatToUSD = (amt: number | undefined) => {
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     const [balance, setBalance] = useState<number>(0)
     const [tokens, setTokens] = useState<ListOutputsResult>({} as ListOutputsResult)
-    const [displayTokens, setDisplayTokens] = useState<any[]>([])
+    const [displayTokens, setDisplayTokens] = useState<DisplayToken[]>([])
     const [config, setConfig] = useState<MNEEConfig>({} as MNEEConfig)
 
     const getBalance = useCallback(async () => {
@@ -73,9 +79,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
             })
             setTokens(ts)
             let total = 0
-            const disp: any[] = []
+            const disp: DisplayToken[] = []
             ts.outputs.forEach((token: WalletOutput) => {
-                let displayToken: any = { ...token }
+                const displayToken: DisplayToken = { ...token }
                 // get the tx from the beef
                 const [txid, vout] = token.outpoint.split('.')
                 const beef = Beef.fromBinary(ts.BEEF as number[])

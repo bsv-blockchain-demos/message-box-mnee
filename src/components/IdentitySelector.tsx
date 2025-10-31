@@ -1,4 +1,4 @@
-import { Stack, Typography, IconButton, Link } from '@mui/material'
+import { Stack, Typography, IconButton, Link, Theme } from '@mui/material'
 import { IdentityCard, IdentityProps } from '@bsv/identity-react'
 import { useTheme } from '@mui/material/styles'
 import { Clear } from '@mui/icons-material'
@@ -13,7 +13,7 @@ function IdentitySelector({ selectedIdentity, setSelectedIdentity }: IdentitySel
   const theme = useTheme()
 
   // Using type assertion to work around the Material UI version mismatch
-  const compatTheme = theme as any
+  const compatTheme = theme as Theme
 
   if (!selectedIdentity) {
     return (

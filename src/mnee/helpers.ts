@@ -27,7 +27,7 @@ export const createTx = async (
   units: number,
   changeAddress: string,
   config: MNEEConfig
-): Promise<{ tx: Transaction, error: string | false }> => {
+): Promise<{ tx: Transaction, remainder: number, error: string | false }> => {
   try {
     let unitsIn = 0
 
@@ -94,27 +94,30 @@ export const createTx = async (
       {
         lockingScript: new TokenTransfer().lock(address, units, approver, PROD_TOKEN_ID),
         satoshis: 1
-      },
-      {
-        lockingScript: new TokenTransfer().lock(changeAddress, remainder, approver, PROD_TOKEN_ID),
-        satoshis: 1
-      },
-      {
-        lockingScript: new TokenTransfer().lock(config.feeAddress, fee, approver, PROD_TOKEN_ID),
-        satoshis: 1
       }
     ]
+    if (remainder > 0) {
+      outputs.push({
+        lockingScript: new TokenTransfer().lock(changeAddress, remainder, approver, PROD_TOKEN_ID),
+        satoshis: 1
+      })
+    }
+    outputs.push({
+      lockingScript: new TokenTransfer().lock(config.feeAddress, fee, approver, PROD_TOKEN_ID),
+      satoshis: 1
+    })
 
     const tx = new Transaction(1, inputs, outputs)
       
     await tx.sign()
     console.log({ signed: tx.toHex() })
 
-    return { tx, error: false }
+    return { tx, remainder, error: false }
   } catch (error) {
     console.error('Error in createTx:', error)
     return {
       tx: new Transaction(),
+      remainder: 0,
       error: error instanceof Error ? error.message : 'Unknown error occurred'
     }
   }

@@ -67,7 +67,7 @@ export default function P2Identity () {
       {loading && <CircularProgress />}
       <Button onClick={getInboundPayments} variant="contained" color="primary" disabled={loading}>Check Inbound Payments</Button>
       <IdentitySelector selectedIdentity={selectedIdentity} setSelectedIdentity={setSelectedIdentity} />
-      <AmountSelector setAmount={setAmount} />
+      <AmountSelector setAmount={setAmount} balance={balance} config={config} />
       <Button onClick={pay} variant="contained" color="primary" disabled={amount === 0 || !selectedIdentity || loading}>Send</Button>
     </Stack>)
 }

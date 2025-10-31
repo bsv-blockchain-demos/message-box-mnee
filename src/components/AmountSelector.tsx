@@ -1,8 +1,9 @@
-import { Stack, Box, useTheme } from '@mui/material'
+import { Stack, Box, useTheme, Button } from '@mui/material'
 import { NumberField } from '@base-ui-components/react/number-field'
 import { toast } from 'react-toastify'
 import styles from './amountSelector.module.css'
 import { useRef, useState, useEffect } from 'react'
+import { MNEEConfig } from '@mnee/ts-sdk'
 
 // Styled dollar sign component
 const DollarSign = () => {
@@ -23,9 +24,11 @@ const DollarSign = () => {
 
 interface AmountSelectorProps {
   readonly setAmount: (amount: number) => void;
+  readonly balance?: number;
+  readonly config?: MNEEConfig;
 }
 
-function AmountSelector({ setAmount }: AmountSelectorProps) {
+function AmountSelector({ setAmount, balance, config }: AmountSelectorProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [inputValue, setInputValue] = useState<string>('');
     const [debouncedValue, setDebouncedValue] = useState<string>('');
@@ -41,6 +44,40 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
         }
         
         return value;
+    };
+
+    const calculateMaxAmount = (): number => {
+        if (!balance || !config || !config.fees) return 0;
+        
+        // Convert balance to atomic units for fee calculation
+        const balanceAtomic = balance;
+        
+        // Find the appropriate fee tier for the maximum possible amount
+        // We'll iterate through possible amounts to find the maximum that fits
+        let maxAmount = 0;
+        for (let amount = balanceAtomic; amount > 0; amount--) {
+            const feeTier = config.fees.find(tier => 
+                amount >= tier.min && amount <= tier.max
+            );
+            if (feeTier && amount + feeTier.fee <= balanceAtomic) {
+                maxAmount = amount;
+                break;
+            }
+        }
+        
+        // Convert back to USD amount (divide by 100000)
+        return maxAmount / 100000;
+    };
+
+    const handleMaxClick = () => {
+        const maxAmount = calculateMaxAmount();
+        if (maxAmount > 0) {
+            setInputValue(maxAmount.toString());
+            setDebouncedValue(maxAmount.toString());
+            setAmount(maxAmount);
+        } else {
+            toast.error('Unable to calculate maximum amount');
+        }
     };
 
     // Debounce the validation and setting of amount
@@ -88,7 +125,7 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
     };
 
     return (
-      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={3}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
         <Box>
             <NumberField.Root className={styles.Field}>
                 <NumberField.ScrubArea className={styles.ScrubArea}>
@@ -113,6 +150,14 @@ function AmountSelector({ setAmount }: AmountSelectorProps) {
                 </NumberField.Group>
             </NumberField.Root>
         </Box>
+        <Button 
+            variant="outlined" 
+            size="small" 
+            onClick={handleMaxClick}
+            disabled={!balance || !config}
+        >
+            Max
+        </Button>
       </Stack>
   )
 }

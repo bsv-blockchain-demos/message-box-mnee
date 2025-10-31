@@ -11,7 +11,7 @@ function P2Address() {
   const [loading, setLoading] = useState<boolean>(false)
   const [address, setAddress] = useState('')
   const [amount, setAmount] = useState<number>(0)
-  const { wallet, mnee, tokens, getBalance, config } = useWallet()
+  const { wallet, mnee, tokens, getBalance, balance, config } = useWallet()
 
   const handleAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAddress(event.target.value)
@@ -47,22 +47,28 @@ function P2Address() {
 
       const response: { tx: Transaction, error: string | false} = await cosignBroadcast(createTxRes.tx, mnee)
       if (response?.tx) {
-        const internalizeResponse = await wallet.internalizeAction({
-          tx: response.tx.toAtomicBEEF(),
-          outputs: [{
-            outputIndex: 1,
-            protocol: 'basket insertion',
-            insertionRemittance: {
-              basket: 'MNEE tokens',
-              customInstructions: JSON.stringify(instructions),
-              tags: ['MNEE', 'change']
-            }
-          }],
-          description: 'Paying MNEE to recipient address'
-        })
-        if (!internalizeResponse.accepted) {
-          toast.error('Wallet rejected the change output')
+        let success = undefined
+        if (createTxRes.remainder > 0) {
+          const internalizeResponse = await wallet.internalizeAction({
+            tx: response.tx.toAtomicBEEF(),
+            outputs: [{
+              outputIndex: 1,
+              protocol: 'basket insertion',
+              insertionRemittance: {
+                basket: 'MNEE tokens',
+                customInstructions: JSON.stringify(instructions),
+                tags: ['MNEE', 'change']
+              }
+            }],
+            description: 'Paying MNEE to recipient address'
+          })
+          if (internalizeResponse.accepted) {
+            success = true
+          }
         } else {
+          success = true
+        }
+        if (success) {
           // relinquish each input that was a token spent
           createTxRes.tx.inputs.forEach(async input => {
             const txid = input.sourceTransaction?.id('hex')
@@ -100,7 +106,7 @@ function P2Address() {
         onChange={handleAddressChange}
         placeholder="1..."
       />
-      <AmountSelector setAmount={setAmount} />
+      <AmountSelector setAmount={setAmount} balance={balance} config={config} />
       <Button 
         onClick={handlePayment} 
         variant="contained" 

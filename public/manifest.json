@@ -1,0 +1,29 @@
+{
+  "babbage": {
+    "groupPermissions": {
+      "protocolPermissions": [
+        {
+          "protocolID": [2, "Pay MNEE"],
+          "counterparty": "self",
+          "description": "Creating receive addresses for MNEE tokens"
+        },
+        {
+          "protocolID": [1, "messagebox"],
+          "counterparty": "self",
+          "description": "Decrypt inbound payment messages"
+        },
+        {
+          "protocolID": [1, "messagebox advertisement"],
+          "counterparty": "anyone",
+          "description": "Let people know how to pay you"
+        }
+      ],
+      "basketAccess": [
+        {
+          "basket": "MNEE tokens",
+          "description": "For holding MNEE stablecoin tokens."
+        }
+      ]
+    }
+  }
+}
